@@ -40,6 +40,18 @@ is a startup error. It does not change interface, routing, firewall, or service
 configuration. Binding a socket does not establish ownership of the LED pins;
 the normal DLD preparation and handover requirements still apply.
 
+The receiver writes `dld-udp: ready` to stderr once startup has succeeded.
+With the green flash enabled, this follows its completed final black frame
+or the first successfully sent UDP color that supersedes the flash. With
+`--no-startup-flash`, it follows socket binding and sender attachment without
+sending a test frame. The earlier `listening` diagnostic alone does not mean
+the startup flash succeeded. This is a one-time startup signal, not a health
+heartbeat or a completion acknowledgment for later colors.
+
+The [temporary SSH launchers](trial.md) detach the receiver and wait up to
+20 seconds for that readiness line. They do not monitor it after reporting
+success; production service installation and restart policy remain separate.
+
 The process stays in the foreground. Ctrl+C, `SIGTERM`, or `SIGHUP` stops it;
 an idle stop sends no frame and leaves the initialized PRU and last displayed
 color alone. Stopping between flash frames also sends no extra cleanup color;

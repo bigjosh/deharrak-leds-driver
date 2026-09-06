@@ -123,6 +123,23 @@ Item 13 supersedes its earlier deferral. The remaining unchecked items are follo
   - Valid UDP colors interrupt flashes between completed sends. Invalid packets reset inactivity without interrupting a running flash. The inactivity interval starts at sender attachment and resets at each packet receipt or completed red flash; green completion does not reset it. An uninterrupted flash ends black without restoring the previous UDP color. Signals and sender errors retain existing cleanup semantics; no kernel, PRU, or standalone-command behavior changes.
   - Packet-only regressions disable both animations; flash timing and receive/lifecycle interaction have separate software coverage. Installed-panel appearance and actual receive-to-completion performance remain part of items 14 and 17.
 
+- [x] **20. Temporary replacement of LEDscape over SSH**.
+  - Provide Windows PowerShell and Linux shell launchers taking a target address
+    and local panel configuration. Copy a matching native bundle into a fresh
+    RAM-backed `/run` directory, stop the existing LEDscape service, apply the
+    runtime prerequisites, initialize the panel, and detach `dld-udp` from SSH.
+  - Package all commands with the common `/run/dld.lock` path. Keep DLD files,
+    preparation records, and receiver logs in RAM; change no installed files,
+    service definitions, or boot enablement. Preserve strict SSH host-key
+    verification and fail on setup errors. Require LEDscape already enabled
+    at boot, and reject an existing DLD process or loaded helper before the
+    handover. Serialize deployments with `/run/dld-trial.lock` and wait for
+    receiver readiness before reporting success.
+  - Recovery is reboot through the existing LEDscape boot setup. No rollback
+    automation or persistent DLD service is added. Software checks of packaging
+    and launch behavior do not replace physical handover and installed-panel
+    qualification. See the [trial procedure](docs/trial.md).
+
 ## Reference material from the review
 
 - [Worldsemi WS2811 datasheet](https://www.mouser.com/datasheet/3/1348/1/WS2811.pdf): mode, timing, and color-order differences to check against deployed hardware.

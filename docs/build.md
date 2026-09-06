@@ -110,6 +110,35 @@ make LOCK_PATH="$PWD/dld.lock" test report
 Use the matching custom kernel path in the clean command if `KDIR` was
 overridden, and keep that override on the subsequent top-level commands.
 
+## Package a temporary SSH deployment
+
+For the [RAM-only trial launchers](trial.md), run this from a dedicated native
+source directory on the BBG:
+
+```sh
+sh tools/package-trial.sh
+```
+
+The helper creates `build/dld-trial.tar.gz`, containing the ARM commands,
+matching kernel module, runtime handover tools, configuration checker,
+manifest, and build report. It uses a fresh build workspace under `/run` and
+builds the commands with the shared lock path `/run/dld.lock`, keeping the
+lock in RAM alongside the deployed package. Use this helper instead of
+archiving arbitrary previous build outputs whose compiled lock path may
+point at persistent storage. An optional single output-path argument selects
+an archive destination other than `build/dld-trial.tar.gz`; existing outputs
+are refused. The temporary source/build directory remains in `/run` until
+reboot. The helper runs `test-native` plus the mocked remote-handover and
+launcher suites before packaging, without initializing hardware.
+
+Packaging uses the installed native compiler and matching kernel build tree;
+it does not install packages or take hardware ownership. Copy the resulting
+archive back to the local checkout before running either deployment launcher.
+Keep the local launchers and bundle from the same source version; the remote
+bootstrap rejects a bundle containing a different copy of its helper.
+The [trial guide](trial.md) gives Windows and Linux commands, prerequisites,
+and the reboot recovery procedure.
+
 ## Outputs and build record
 
 Paths below are relative to the source directory where the native build ran.
@@ -127,6 +156,7 @@ Paths below are relative to the source directory where the native build ran.
 | `build/dld-init.dis`, `build/dld-send.dis`, `build/dld-udp.dis` | ARM disassembly produced by `make audit` |
 | `kernel/dld_quiet.dis` | Linked module disassembly audited by `make audit` |
 | `build/build-report.txt` | Toolchain, sizes, ARM attributes, dependencies, module metadata, and SHA256 hashes from `make report` |
+| `build/dld-trial.tar.gz` | Temporary SSH deployment bundle produced by `tools/package-trial.sh` |
 
 The build rejects an empty, misaligned, or larger-than-8,192-byte PRU image;
 the loader checks the image size again before writing instruction RAM.

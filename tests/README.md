@@ -125,6 +125,39 @@ which require POSIX facilities such as `fcntl` and Unix signals. None of the
 three explicit offline commands above contacts BBG, Saleae, or the Logic
 application.
 
+## Temporary SSH deployment checks
+
+Run the remote-handover and Linux-launcher software tests explicitly:
+
+```sh
+python3 tests/test_trial_remote.py
+python3 tests/test_deploy_trial.py
+```
+
+The remote-handover suite supports Python 3.2 and later without extra packages,
+including on Windows. It replaces
+system, subprocess, service, kernel, and process observations with controlled
+test doubles and writes only temporary local files. It covers bundle integrity
+and unsafe archive entries, prerequisite checks before runtime changes, failure
+ordering during handover, and detached receiver readiness and liveness.
+It does not connect over SSH, run native DLD commands, load a module, stop
+LEDscape, or access GPIO/PRU hardware.
+
+`test_deploy_trial.py` runs nine POSIX launcher cases with fake `ssh` and `scp`
+executables placed first on a private test PATH. It checks transfer/handover
+ordering, paths containing spaces, numeric IPv6 and flash options, strict host
+verification, rejected arguments and unsafe remote-directory responses, and
+failure propagation. It runs on Linux and skips on Windows; it never contacts
+a target. Windows PowerShell argument handling needs a separate native
+fake-executable check for the PowerShell versions being supported.
+
+Creating a [trial bundle](../docs/trial.md#build-the-bundle-once) compiles in a
+fresh native workspace. That checks build compatibility; executing either
+`deploy-trial` launcher performs an actual hardware handover and belongs in a
+separately authorized live test. Neither mocked startup nor a successful
+readiness message establishes the installed panel's waveform, appearance,
+or delivery rate from the real controller.
+
 ## Native build isolation and read-only inspection
 
 Use the existing compiler, make, assembler, and libraries on the target. Place the

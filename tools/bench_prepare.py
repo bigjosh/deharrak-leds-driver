@@ -44,9 +44,8 @@ def trigger(path):
     return matches[0]
 
 
-def apply(path):
-    if os.path.exists(path):
-        raise RuntimeError("state path already exists; never overwrite saved settings")
+def inspect_state():
+    """Validate prerequisites and collect settings without changing them."""
     if platform.release() != "3.8.13-bone80" or read("/sys/devices/system/cpu/online") != "0":
         raise RuntimeError("expected single-online-CPU reference BBG kernel")
     if len(read("/proc/swaps").splitlines()) != 1:
@@ -65,6 +64,13 @@ def apply(path):
                               "brightness": read(base + "brightness")})
     if len(state["leds"]) != 4:
         raise RuntimeError("expected exactly four BBG user LEDs")
+    return state
+
+
+def apply(path):
+    if os.path.exists(path):
+        raise RuntimeError("state path already exists; never overwrite saved settings")
+    state = inspect_state()
     save(path, state)  # Recovery information is durable before the first write.
     write(CPU + "scaling_max_freq", "1000000")
     write(CPU + "scaling_min_freq", "1000000")
@@ -113,11 +119,16 @@ def main():
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--apply")
     group.add_argument("--restore")
+    group.add_argument("--check", action="store_true",
+                       help="validate runtime prerequisites without changing settings")
     args = parser.parse_args()
     if os.geteuid() != 0:
         parser.error("requires root on the BBG")
     try:
-        if args.apply:
+        if args.check:
+            inspect_state()
+            print("Runtime preparation prerequisites passed; no settings changed")
+        elif args.apply:
             apply(os.path.abspath(args.apply))
         else:
             restore(os.path.abspath(args.restore))

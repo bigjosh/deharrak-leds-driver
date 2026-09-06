@@ -47,6 +47,9 @@ build/dld-init: build/dld_init.o $(COMMON_OBJECTS) build/pru_blob.o
 build/dld-send: build/dld_send.o $(SENDER_OBJECTS)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
+build/dld-config-check: build/dld_config_check.o build/dld_common.o
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+
 build/dld-udp: build/dld_udp.o build/dld_opc.o build/dld_flash.o $(SENDER_OBJECTS)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
@@ -100,4 +103,4 @@ report: all
 	cat build/build-report.txt
 
 clean:
-	rm -f build/*.o build/dld-init build/dld-send build/dld-udp build/test-common build/test-send-syscall build/test-admission build/test-opc build/test-flash build/test-udp build/bench-spin build/hw-probe build/quiet-kernel-probe build/pasm build/pru.bin build/pru.txt build/pru.lst build/pru_blob.c build/*.dis build/build-report.txt
+	rm -f build/*.o build/dld-init build/dld-send build/dld-udp build/dld-config-check build/test-common build/test-send-syscall build/test-admission build/test-opc build/test-flash build/test-udp build/bench-spin build/hw-probe build/quiet-kernel-probe build/pasm build/pru.bin build/pru.txt build/pru.lst build/pru_blob.c build/*.dis build/build-report.txt

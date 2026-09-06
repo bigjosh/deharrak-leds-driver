@@ -327,6 +327,7 @@ class UdpTests(unittest.TestCase):
         self.assertEqual(receiver.stop(), 0)
         self.assertIn("sent=0 flash_frames={0}".format(len(receiver.colors())), receiver.errors())
         self.assertIn("startup_flashes=1 idle_flashes=1 interrupted_flashes=0", receiver.errors())
+        self.assertEqual(receiver.errors().count("dld-udp: ready\n"), 1)
         self.assertEqual(receiver.lines().count("OPEN"), 1)
         # Every selected frame completes before the next frame is submitted.
         events = receiver.lines()[1:-1]
@@ -379,6 +380,7 @@ class UdpTests(unittest.TestCase):
             self.assertIn("valid=1", receiver.errors())
             self.assertIn("sent=1", receiver.errors())
             self.assertIn("startup_flashes=0 idle_flashes=0 interrupted_flashes=1", receiver.errors())
+            self.assertEqual(receiver.errors().count("dld-udp: ready\n"), 1)
 
     def test_invalid_input_during_flash_does_not_interrupt(self):
         receiver = Receiver(self, startup=True, delay=80)
@@ -441,6 +443,7 @@ class UdpTests(unittest.TestCase):
         self.assertEqual(len(receiver.colors("SEND")), 2)
         self.assertEqual(receiver.colors(), [0])
         self.assertIn("flash_frames=1 startup_flashes=0", receiver.errors())
+        self.assertNotIn("dld-udp: ready\n", receiver.errors())
         self.assertEqual(receiver.lines()[-2:], ["FAIL", "CLOSE"])
 
     def test_signal_during_status_send_preserves_critical_failure(self):
@@ -449,6 +452,7 @@ class UdpTests(unittest.TestCase):
         self.assertEqual(receiver.stop(), 5)
         self.assertEqual(receiver.lines(), ["OPEN", "SEND 000000", "FAIL", "CLOSE"])
         self.assertIn("flash_frames=0 startup_flashes=0", receiver.errors())
+        self.assertNotIn("dld-udp: ready\n", receiver.errors())
 
     def test_clock_failure_closes_sender_and_exits(self):
         receiver = Receiver(self, idle=True, fake_clock=True)

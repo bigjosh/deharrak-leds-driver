@@ -1,0 +1,173 @@
+# Temporary replacement over SSH
+
+The trial launchers copy a native DLD bundle and your panel configuration into
+a new `/run/dld-trial.XXXXXX` directory on the BBG, stop `ledscape.service`,
+initialize DLD, and leave `dld-udp` running after SSH disconnects. They do not install
+software, edit service files, or disable LEDscape at boot. Reboot clears the
+trial and lets the board's existing boot configuration start LEDscape again.
+
+This is an operational handover: running either launcher changes the displayed
+panel. The green startup flash and red inactivity flash are enabled by default.
+Successful startup confirms the process is ready; it does not qualify installed
+color order, electrical timing, or controller-to-panel packet delivery.
+
+## Before running
+
+- Use the supported BBG kernel `3.8.13-bone80` and matching native bundle.
+  The existing board must provide Python 3, the required runtime libraries,
+  `uio_pruss`, systemd, and the prerequisites in the
+  [operating guide](../README.md#requirements-and-build).
+- Establish root SSH access through your existing SSH keys, agent, or host
+  configuration. Verify the target's host key first. The launchers use strict
+  host-key checking and noninteractive authentication; they never embed a
+  password or accept an unknown key automatically.
+- Supply a local panel JSON file with the installed pixel profile and six
+  string lengths, following [panel configuration](../README.md#configure-a-panel).
+  The launchers do not infer this from LEDscape's configuration.
+- Exclude independently launched renderers and other PRU/GPIO users. The
+  handover controls the named `ledscape.service`; it cannot establish exclusive
+  ownership against arbitrary hardware users.
+- LEDscape must already be enabled at boot; the preflight checks this without
+  changing its enablement. A loaded `dld_quiet` module or running DLD command
+  causes rejection before LEDscape is stopped. Reboot before replacing an
+  earlier DLD session or starting another trial.
+- The scripts require RAM-backed `/run` and no swap so the trial's files
+  remain in memory.
+
+## Build the bundle once
+
+Build on a compatible BBG using a dedicated checkout containing these scripts.
+See [native build setup](build.md) for compiler and matching-kernel-header
+requirements. From that source directory:
+
+```sh
+sh tools/package-trial.sh
+```
+
+The package helper creates a fresh build workspace under `/run`, builds the
+commands with the common lock path `/run/dld.lock`, and writes
+`build/dld-trial.tar.gz`. To choose another output path, supply it as the
+single argument. Existing output files are never overwritten; choose a new
+name when rebuilding. The temporary source/build directory remains under
+`/run` until reboot. Packaging runs the native software suite and mocked
+handover/launcher tests before producing the archive.
+
+The archive contains all three commands, the matching kernel
+module, an internal configuration checker, handover/preparation tools, a file
+manifest, and a build report. PRU firmware is embedded in `dld-init`; it needs
+no separate firmware installation. Packaging does not stop LEDscape, load a
+module, initialize pins, or send colors.
+
+Download that archive to `build/dld-trial.tar.gz` in this local checkout, using
+the actual native build directory:
+
+```sh
+scp -O root@beaglebone:/root/dld-BUILD/build/dld-trial.tar.gz build/dld-trial.tar.gz
+```
+
+The same `scp` command works in PowerShell and a Linux shell. The bundle can be
+reused on compatible targets. Keep the local deployment scripts from the same
+version as the bundle: the remote bootstrap must exactly match its packaged
+copy. A mismatch fails before changing runtime state. A regular build compiled with a project-local
+lock is not a substitute: the trial package fixes all three commands to the
+same RAM-backed lock path.
+
+## Run from Windows
+
+Use Windows PowerShell 5.1 or PowerShell 7 with OpenSSH `ssh`/`scp` on PATH;
+`scp` must support the legacy
+transfer option `-O` required by the reference BBG.
+
+```powershell
+.\tools\deploy-trial.ps1 -Target 192.168.1.50 -PanelConfig .\config\panel.json
+```
+
+To select a different bundle, a previously verified known-hosts file, or disable
+either flash:
+
+```powershell
+.\tools\deploy-trial.ps1 -Target beaglebone -PanelConfig .\config\panel.json `
+  -Bundle .\build\dld-trial.tar.gz -KnownHosts .\build\known_hosts `
+  -NoStartupFlash -NoIdleFlash
+```
+
+## Run from Linux
+
+Use a POSIX shell, standard `awk`, and OpenSSH `ssh`/`scp` with `-O` support.
+The local Linux launcher needs no Python installation:
+
+```sh
+sh tools/deploy-trial.sh 192.168.1.50 config/panel.json
+```
+
+The equivalent explicit options are:
+
+```sh
+sh tools/deploy-trial.sh beaglebone config/panel.json \
+  --bundle build/dld-trial.tar.gz --known-hosts build/known_hosts \
+  --no-startup-flash --no-idle-flash
+```
+
+Both launchers accept a hostname, IPv4 address, or unbracketed numeric IPv6
+address and run as `root` on the target. Their default bundle is
+`build/dld-trial.tar.gz` relative to this checkout; the panel path identifies
+a file on the local computer. Flash options are independent. A valid incoming
+color can interrupt either enabled flash, so continuous controller traffic
+may prevent a complete green startup animation.
+
+## What stays temporary
+
+The bundle, copied panel configuration, preparation record, PID, and logs live
+under the new `/run` directory. The common DLD lock is `/run/dld.lock`; a
+separate `/run/dld-trial.lock` prevents overlapping deployment attempts.
+CPU-frequency policy, user-LED triggers, loaded modules, PRU firmware, and the
+running receiver are runtime state. The handover stops LEDscape without
+disabling it, and adds no boot service or automatic restart policy for DLD.
+
+This keeps DLD's deployment files off persistent storage. Existing SSH,
+systemd, and kernel logging still follow the board's normal logging policy;
+the scripts do not reconfigure system logging.
+
+The receiver listens on the existing OPC/UDP port **7890**. It remains running
+when the launcher exits or the SSH connection closes. A sender error terminates
+it rather than retrying or reinitializing. See the [UDP guide](udp.md) for
+packet handling, status counters, and failure behavior.
+
+## Startup result and logs
+
+The launcher prints the new trial directory. The remote helper checks the
+bundle, configuration, and prerequisites, applies the runtime preparation,
+loads the modules, then stops LEDscape and verifies it has exited. Successful
+initialization is followed by receiver startup.
+It waits up to 20 seconds for the exact `dld-udp: ready` message. With the default
+green flash, readiness follows the completed flash or a successful UDP color
+that interrupts it. With `--no-startup-flash`, attachment establishes readiness
+without a test frame.
+
+Within the printed directory:
+
+| File | Contents |
+|---|---|
+| `handover.log` | Setup commands and diagnostics |
+| `udp.log` | Receiver startup, errors, and final counters |
+| `udp.pid` | Detached receiver's process ID |
+| `preparation.json` | Recorded CPU and user-LED runtime settings |
+
+Read or copy these files over SSH using the exact directory printed by the
+launcher. The readiness check covers startup only; it does not supervise the
+receiver after the launcher returns.
+
+## If the swap fails
+
+The launchers stop on a failed prerequisite, transfer, initialization, or
+startup check and report the trial directory. No automatic rollback restarts
+LEDscape or restores settings. A startup failure requests termination of the
+receiver launched by that attempt. Preserve any needed RAM logs before rebooting;
+they disappear when `/run` is cleared.
+
+Reboot the board through its usual management procedure. Its existing startup
+configuration then takes over. After reboot, rerun the launcher for another
+trial; it creates a fresh directory and initializes a new session.
+
+The [validation record](validation-trial.md) describes the completed native,
+mock-handover, launcher, and SSH-detachment checks and their limits.

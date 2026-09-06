@@ -193,6 +193,7 @@ int main(int argc, char **argv)
     char error[512] = "";
     int i, fd = -1, sender_opened = 0, code = DLD_OK;
     int startup_enabled = 1, idle_enabled = 1;
+    int announced_ready = 0;
     enum { FLASH_NONE, FLASH_STARTUP, FLASH_IDLE } flashing = FLASH_NONE;
     memset(&counts, 0, sizeof(counts));
     for (i = 1; i < argc; ++i) {
@@ -222,6 +223,10 @@ int main(int argc, char **argv)
     fprintf(stderr, "dld-udp: listening on [%s]:%s; OPC RGB, batch limit %u; "
             "startup flash %s, idle flash %s\n", address, port, DLD_UDP_BATCH,
             startup_enabled ? "on" : "off", idle_enabled ? "on" : "off");
+    if (!startup_enabled) {
+        fprintf(stderr, "dld-udp: ready\n");
+        announced_ready = 1;
+    }
     while (!dld_cancelled) {
         struct pollfd watched;
         struct dld_send_result result;
@@ -258,6 +263,10 @@ int main(int argc, char **argv)
         if (have_color || flashing != FLASH_NONE) {
             code = dld_sender_send(&sender, rgb, &result, error, sizeof(error));
             if (code != DLD_OK) break;
+            if (!announced_ready && (have_color || final_frame)) {
+                fprintf(stderr, "dld-udp: ready\n");
+                announced_ready = 1;
+            }
             if (have_color) ++counts.sent;
             else {
                 ++counts.flash_frames;

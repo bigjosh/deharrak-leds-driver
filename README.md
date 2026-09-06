@@ -20,6 +20,24 @@ color for the entire panel. It runs in the foreground after initialization;
 by default it flashes green at startup and red after a minute without UDP
 traffic. Production boot-service installation remains separate integration work.
 
+To replace LEDscape temporarily over SSH, use the supplied
+[RAM-only trial procedure](docs/trial.md). After building its bundle once,
+run either launcher from this checkout with the target address and local panel
+configuration:
+
+```powershell
+.\tools\deploy-trial.ps1 -Target 192.168.1.50 -PanelConfig .\config\panel.json
+```
+
+```sh
+sh tools/deploy-trial.sh 192.168.1.50 config/panel.json
+```
+
+The launcher copies the bundle into a fresh `/run` directory, prepares the
+driver, stops LEDscape, initializes the panel, and starts `dld-udp` independently
+of the SSH connection. It changes runtime state without installing a service
+or disabling LEDscape at boot. Reboot is the recovery procedure.
+
 ## How it works
 
 `dld-init CONFIG_FILE` configures all six pins as outputs held low, stores the
@@ -132,6 +150,10 @@ next initialization; both senders continue using the retained configuration
 until then. A failed initialization can invalidate the previous session.
 
 ## Start the driver
+
+For a temporary SSH replacement, the [trial launchers](docs/trial.md) perform
+this handover and start the UDP receiver. The following commands are the
+manual alternative for a native build already on the BBG.
 
 Run from the chosen build's source directory on the BBG, as root, after
 excluding independent PRU/GPIO users. These commands prepare the board, load
@@ -258,6 +280,11 @@ for detailed diagnostics and cancellation behavior.
 
 ## Return control to LEDscape
 
+For the [RAM-only SSH trial](docs/trial.md), reboot to return to the existing
+LEDscape boot setup. Copy any trial logs off the board first if needed.
+
+For a manually prepared session without rebooting:
+
 Stop `dld-udp`, the calling application, and all send loops; wait for active commands
 to finish. To return to the previous runtime settings and service, use the
 state file saved for this session:
@@ -276,7 +303,8 @@ and initialization again before using DLD.
 
 The investigation and test records remain part of this repository:
 
-- [UDP operating guide](docs/udp.md), [build guide](docs/build.md), [hardware reference](docs/hardware.md), and
+- [Temporary SSH deployment](docs/trial.md), [UDP operating guide](docs/udp.md),
+  [build guide](docs/build.md), [hardware reference](docs/hardware.md), and
   [full specification](spec.md): supported environment and command contract.
 - [Protected operation](docs/quiet-window.md), [kernel helper](kernel/README.md),
   and [PRU firmware](pru/README.md): how the timing protection works.

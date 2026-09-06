@@ -148,8 +148,20 @@ executables placed first on a private test PATH. It checks transfer/handover
 ordering, paths containing spaces, numeric IPv6 and flash options, strict host
 verification, rejected arguments and unsafe remote-directory responses, and
 failure propagation. It runs on Linux and skips on Windows; it never contacts
-a target. Windows PowerShell argument handling needs a separate native
-fake-executable check for the PowerShell versions being supported.
+a target.
+
+On Windows, run the launcher regression through Windows PowerShell 5.1:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tests\test_deploy_trial_windows.ps1
+```
+
+This builds local fake SSH/SCP executables and invokes the batch/PowerShell
+launchers from an isolated fixture checkout. It checks the two-argument batch
+invocation with the default bundle, location-independent paths, explicit
+options, missing files, and failure exit codes. No network connection or
+hardware handover occurs. The execution-policy override applies only to the
+test process; the machine's policy stays unchanged.
 
 Creating a [trial bundle](../docs/trial.md#build-the-bundle-once) compiles in a
 fresh native workspace. That checks build compatibility; executing either

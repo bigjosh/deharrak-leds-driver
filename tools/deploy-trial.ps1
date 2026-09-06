@@ -3,7 +3,7 @@
 param(
     [Parameter(Mandatory = $true, Position = 0)][string]$Target,
     [Parameter(Mandatory = $true, Position = 1)][string]$PanelConfig,
-    [string]$Bundle = (Join-Path (Split-Path -Parent $PSScriptRoot) 'build/dld-trial.tar.gz'),
+    [string]$Bundle,
     [string]$KnownHosts,
     [switch]$NoStartupFlash,
     [switch]$NoIdleFlash
@@ -13,6 +13,11 @@ $dldRemoteDirectory = $null
 $dldExit = 2
 
 try {
+    # With Windows PowerShell -File, $PSScriptRoot can be empty while parameter
+    # defaults are evaluated. Resolve the default after script binding instead.
+    if (-not $PSBoundParameters.ContainsKey('Bundle')) {
+        $Bundle = Join-Path (Split-Path -Parent $PSScriptRoot) 'build/dld-trial.tar.gz'
+    }
     if ($Target.Contains(':')) {
         $dldAddress = $null
         if ($Target -notmatch '^[0-9A-Fa-f:]+$' -or

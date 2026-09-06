@@ -1,5 +1,6 @@
 # Keep source, shell scripts, and documentation portable to the Linux target.
 * text=auto eol=lf
+*.bat text eol=crlf
 
 # Preserve vendored source and recorded evidence byte-for-byte for their hashes.
 /vendor/pasm/** -text

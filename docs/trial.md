@@ -74,21 +74,26 @@ same RAM-backed lock path.
 
 ## Run from Windows
 
-Use Windows PowerShell 5.1 or PowerShell 7 with OpenSSH `ssh`/`scp` on PATH;
-`scp` must support the legacy
+Use the batch launcher from PowerShell or Command Prompt. It requires Windows
+PowerShell 5.1 and OpenSSH `ssh`/`scp` on PATH; `scp` must support the legacy
 transfer option `-O` required by the reference BBG.
 
 ```powershell
-.\tools\deploy-trial.ps1 -Target 192.168.1.50 -PanelConfig .\config\panel.json
+.\tools\deploy-trial.bat 192.168.1.50 .\config\panel.json
 ```
 
+The batch launcher runs the adjacent PowerShell script with an execution-policy
+override for that child process only. It does not change the computer's saved
+execution policy, and no `Set-ExecutionPolicy` command is needed. You can still
+run `deploy-trial.ps1` directly from Windows PowerShell 5.1 or PowerShell 7 if
+your execution policy allows it.
+
 To select a different bundle, a previously verified known-hosts file, or disable
-either flash:
+either flash, pass the same named options through the batch launcher. This
+single-line example works in PowerShell and Command Prompt:
 
 ```powershell
-.\tools\deploy-trial.ps1 -Target beaglebone -PanelConfig .\config\panel.json `
-  -Bundle .\build\dld-trial.tar.gz -KnownHosts .\build\known_hosts `
-  -NoStartupFlash -NoIdleFlash
+.\tools\deploy-trial.bat beaglebone .\config\panel.json -Bundle .\build\dld-trial.tar.gz -KnownHosts .\build\known_hosts -NoStartupFlash -NoIdleFlash
 ```
 
 ## Run from Linux

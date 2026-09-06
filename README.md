@@ -26,7 +26,7 @@ run either launcher from this checkout with the target address and local panel
 configuration:
 
 ```powershell
-.\tools\deploy-trial.ps1 -Target 192.168.1.50 -PanelConfig .\config\panel.json
+.\tools\deploy-trial.bat 192.168.1.50 .\config\panel.json
 ```
 
 ```sh

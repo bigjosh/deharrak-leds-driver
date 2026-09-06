@@ -34,6 +34,19 @@ color order, electrical timing, or controller-to-panel packet delivery.
 - The scripts require RAM-backed `/run` and no swap so the trial's files
   remain in memory.
 
+## First SSH connection
+
+For a target address used for the first time, establish the SSH connection
+before launching the trial:
+
+```sh
+ssh root@192.168.1.50 exit
+```
+
+Confirm the board's host-key fingerprint when prompted. The saved entry is
+address-specific: trusting a hostname does not necessarily establish trust
+for a different IP address. The launchers keep strict checking enabled.
+
 ## Build the bundle once
 
 Build on a compatible BBG using a dedicated checkout containing these scripts.
@@ -164,6 +177,13 @@ receiver after the launcher returns.
 
 ## If the swap fails
 
+Exit 255 generally means SSH could not establish the connection. Read the SSH
+diagnostic printed immediately before the launcher's error: it distinguishes
+an unknown/changed host key, an authentication failure, and an unreachable
+target. The Windows launcher forwards these diagnostics explicitly. An unknown
+key for a new address is handled by the first-connection procedure above;
+investigate a changed key before replacing an existing trusted entry.
+
 The launchers stop on a failed prerequisite, transfer, initialization, or
 startup check and report the trial directory. No automatic rollback restarts
 LEDscape or restores settings. A startup failure requests termination of the
@@ -176,3 +196,5 @@ trial; it creates a fresh directory and initializes a new session.
 
 The [validation record](validation-trial.md) describes the completed native,
 mock-handover, launcher, and SSH-detachment checks and their limits.
+The [first live handover record](validation-trial-live.md) covers the subsequent
+authorized deployment to a running BBG.

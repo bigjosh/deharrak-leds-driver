@@ -159,7 +159,8 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tests\test_deploy_tria
 This builds local fake SSH/SCP executables and invokes the batch/PowerShell
 launchers from an isolated fixture checkout. It checks the two-argument batch
 invocation with the default bundle, location-independent paths, explicit
-options, missing files, and failure exit codes. No network connection or
+options, missing files, failure exit codes, and native stderr forwarding,
+including diagnostics larger than a pipe buffer. No network connection or
 hardware handover occurs. The execution-policy override applies only to the
 test process; the machine's policy stays unchanged.
 

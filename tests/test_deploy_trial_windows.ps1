@@ -25,7 +25,7 @@ function ConvertTo-NativeArgument([string]$Value) {
     return '"' + $Value + '"'
 }
 
-function Invoke-Launcher([string]$Mode, [string[]]$Options, [int]$PreflightExit = 0) {
+function Invoke-Launcher([string]$Mode, [string[]]$Options, [int]$PreflightExit = 0, [int]$StderrBytes = 0) {
     $dldLog = Join-Path $dldTestDirectory ([guid]::NewGuid().ToString('N') + '.calls')
     $dldStart = New-Object System.Diagnostics.ProcessStartInfo
     $dldStart.UseShellExecute = $false
@@ -36,6 +36,7 @@ function Invoke-Launcher([string]$Mode, [string[]]$Options, [int]$PreflightExit 
     $dldStart.EnvironmentVariables['PATH'] = $dldFakeBin + ';' + $env:PATH
     $dldStart.EnvironmentVariables['DLD_WINDOWS_TEST_LOG'] = $dldLog
     $dldStart.EnvironmentVariables['DLD_WINDOWS_TEST_PREFLIGHT_EXIT'] = [string]$PreflightExit
+    $dldStart.EnvironmentVariables['DLD_WINDOWS_TEST_STDERR_BYTES'] = [string]$StderrBytes
     if ($Mode -eq 'bat') {
         $dldStart.FileName = Join-Path $env:SystemRoot 'System32/cmd.exe'
         $dldArguments = @((Join-Path $dldCheckout 'tools/deploy-trial.bat')) + $Options
@@ -138,7 +139,15 @@ public class DldOfflineCommand {
             String.Join("\t", record) + "\n");
         if (name == "ssh" && args.Length > 0 && args[args.Length - 1].Contains("mktemp -d")) {
             int status = Int32.Parse(Environment.GetEnvironmentVariable("DLD_WINDOWS_TEST_PREFLIGHT_EXIT"));
-            if (status != 0) return status;
+            if (status != 0) {
+                Console.Error.WriteLine("offline SSH: host key verification failed");
+                int bytes = Int32.Parse(Environment.GetEnvironmentVariable("DLD_WINDOWS_TEST_STDERR_BYTES"));
+                if (bytes > 0) {
+                    Console.Error.Write(new string('E', bytes));
+                    Console.Error.WriteLine("\noffline SSH: end of diagnostic");
+                }
+                return status;
+            }
             Console.WriteLine("/run/dld-trial.aB3456");
         }
         return 0;
@@ -182,6 +191,19 @@ public class DldOfflineCommand {
         Assert-Equal $dldRun.ExitCode 73 "$dldMode native exit propagation"
         Assert-Equal $dldRun.Calls.Count 1 "$dldMode failed preflight must prevent transfers"
         Assert-Equal $dldRun.Calls[0].Tool 'ssh' "$dldMode failed preflight command"
+        Assert-Equal ($dldRun.Error.Contains('offline SSH: host key verification failed')) $true "$dldMode native stderr propagation"
+        Assert-Equal ($dldRun.Output.Contains('offline SSH:')) $false "$dldMode stderr must remain separate from stdout"
+        ++$dldCases
+
+        # More than a pipe buffer, written before stdout closes, catches a
+        # sequential stdout/stderr drain that would deadlock the launcher.
+        $dldRun = Invoke-Launcher $dldMode @('192.0.2.50', $dldRelativePanel) -PreflightExit 255 -StderrBytes 131072
+        Assert-Equal $dldRun.ExitCode 255 "$dldMode SSH failure exit propagation"
+        Assert-Equal $dldRun.Calls.Count 1 "$dldMode verbose failure must prevent transfers"
+        Assert-Equal ($dldRun.Error.Contains('offline SSH: host key verification failed')) $true "$dldMode verbose stderr beginning"
+        Assert-Equal ($dldRun.Error.Contains(('E' * 131072))) $true "$dldMode complete verbose stderr"
+        Assert-Equal ($dldRun.Error.Contains('offline SSH: end of diagnostic')) $true "$dldMode verbose stderr ending"
+        Assert-Equal ($dldRun.Error.Contains('Remote RAM-directory preflight failed (exit 255).')) $true "$dldMode launcher failure context"
         ++$dldCases
     }
     Write-Output "Windows deployment launcher: $dldCases offline cases passed (Windows PowerShell $($PSVersionTable.PSVersion))."

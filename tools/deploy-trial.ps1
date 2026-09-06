@@ -60,6 +60,7 @@ try {
         $dldStart.UseShellExecute = $false
         $dldStart.CreateNoWindow = $true
         $dldStart.RedirectStandardOutput = $true
+        $dldStart.RedirectStandardError = $true
         if ($null -ne $dldStart.PSObject.Properties['ArgumentList']) {
             foreach ($dldArgument in $Arguments) { $dldStart.ArgumentList.Add($dldArgument) }
         } else {
@@ -75,10 +76,15 @@ try {
         $dldLines = New-Object 'System.Collections.Generic.List[string]'
         try {
             [void]$dldProcess.Start()
+            # A hidden native process cannot reliably inherit the launcher's
+            # stderr. Drain it concurrently so SSH diagnostics remain visible
+            # and a full stderr pipe cannot block the stdout reader below.
+            $dldErrorTask = $dldProcess.StandardError.ReadToEndAsync()
             while ($null -ne ($dldLine = $dldProcess.StandardOutput.ReadLine())) {
                 if ($Capture) { $dldLines.Add($dldLine) } else { [Console]::Out.WriteLine($dldLine) }
             }
             $dldProcess.WaitForExit()
+            [Console]::Error.Write($dldErrorTask.Result)
             return @{ ExitCode = $dldProcess.ExitCode; Output = $dldLines.ToArray() }
         } finally {
             $dldProcess.Dispose()

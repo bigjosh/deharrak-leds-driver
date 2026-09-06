@@ -139,6 +139,12 @@ Item 13 supersedes its earlier deferral. The remaining unchecked items are follo
     automation or persistent DLD service is added. Software checks of packaging
     and launch behavior do not replace physical handover and installed-panel
     qualification. See the [trial procedure](docs/trial.md).
+  - The authorized live handover on September 6 to `192.168.68.62` passed:
+    LEDscape stopped, six 300-pixel WS2812B strings initialized, and the receiver
+    remained alive on UDP port 7890 after SSH disconnected. SSH first-use trust
+    and hidden Windows diagnostics were resolved. See the
+    [live trial record](docs/validation-trial-live.md); installed-panel waveform
+    and controller-delivery qualification remain separate.
 
 ## Reference material from the review
 

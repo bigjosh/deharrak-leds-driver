@@ -4,6 +4,14 @@ The tests separate software behavior from physical waveform qualification. A
 passing software test does not qualify the installed LED type, wire color order,
 propagation allowance, or signal measured after the level shifter.
 
+## Gateway release packaging
+
+Run `python tests/test_package_gateway.py` with local Python 3.8+. These offline
+checks cover the release allowlist, exclusion of private build material, native
+bundle integrity and bootstrap matching, deterministic output, safe member
+paths, and refusal to overwrite existing archives/checksums. They do not access
+GitHub or contact a BBG.
+
 ## Local scene generator
 
 The optional [panel exercise program](../docs/exercise.md) runs on the local

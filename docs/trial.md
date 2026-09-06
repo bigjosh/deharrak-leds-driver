@@ -49,6 +49,9 @@ interaction; accepting a host key does not supply a password or login key.
 
 ## Build the bundle once
 
+For an existing prebuilt release, use the [gateway download guide](gateway.md)
+instead of building. Its archive includes the matching launchers and bundle.
+
 Build on a compatible BBG using a dedicated checkout containing these scripts.
 See [native build setup](build.md) for compiler and matching-kernel-header
 requirements. From that source directory:

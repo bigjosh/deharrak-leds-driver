@@ -20,6 +20,11 @@ color for the entire panel. It runs in the foreground after initialization;
 by default it flashes green at startup and red after a minute without UDP
 traffic. Production boot-service installation remains separate integration work.
 
+For BBGs at another site, a Raspberry Pi can download a prebuilt release and
+deploy it over that site's local network. Follow the
+[Raspberry Pi gateway guide](docs/gateway.md); no inbound NAT access or Pi-side
+compilation is required.
+
 To replace LEDscape temporarily over SSH, use the supplied
 [RAM-only trial procedure](docs/trial.md). After building its bundle once,
 run either launcher from this checkout with the target address and local panel

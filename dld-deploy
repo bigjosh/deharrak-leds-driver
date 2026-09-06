@@ -1,0 +1,5 @@
+#!/bin/sh
+# Run from an unpacked gateway release or a checkout with a native trial bundle.
+set -eu
+dld_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+exec sh "$dld_directory/tools/deploy-trial.sh" "$@"

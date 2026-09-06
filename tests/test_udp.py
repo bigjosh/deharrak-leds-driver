@@ -46,13 +46,14 @@ def available_port():
 class Receiver(object):
     def __init__(self, owner, bind="127.0.0.1", delay=0, fail_after=0,
                  port=None, ready=True, arguments=None, startup=False, idle=False,
-                 fake_clock=False):
+                 fake_clock=False, poll_gate=False):
         self.owner = owner
         self.port = available_port() if port is None else port
         self.path = os.path.join(owner.directory, "sender-{0}.log".format(len(owner.receivers)))
         self.error_path = self.path + ".stderr"
         self.output_path = self.path + ".stdout"
         self.clock_path = self.path + ".clock"
+        self.poll_gate_path = self.path + ".poll"
         self.stderr = open(self.error_path, "wb")
         self.stdout = open(self.output_path, "wb")
         environment = os.environ.copy()
@@ -61,9 +62,12 @@ class Receiver(object):
                             "DLD_TEST_FAIL_AFTER": str(fail_after)})
         # Do not inherit test clock settings from the invoking shell.
         environment.pop("DLD_TEST_CLOCK", None)
+        environment.pop("DLD_TEST_POLL_GATE", None)
         if fake_clock:
             self.set_clock(0)
             environment["DLD_TEST_CLOCK"] = self.clock_path
+        if poll_gate:
+            environment["DLD_TEST_POLL_GATE"] = self.poll_gate_path
         command = [BINARY, "--port", str(self.port)]
         if not startup:
             command.append("--no-startup-flash")
@@ -99,6 +103,12 @@ class Receiver(object):
 
     def errors(self):
         return self.read(self.error_path)
+
+    def release_poll(self):
+        temporary = self.poll_gate_path + ".new"
+        with open(temporary, "w") as destination:
+            destination.write("release\n")
+        os.rename(temporary, self.poll_gate_path)
 
     def lines(self):
         return self.read(self.path).splitlines()
@@ -424,12 +434,15 @@ class UdpTests(unittest.TestCase):
         self.assertIn("startup_flashes=0 idle_flashes=2 interrupted_flashes=0", receiver.errors())
 
     def test_queued_udp_takes_priority_over_overdue_idle_flash(self):
-        receiver = Receiver(self, idle=True, delay=80, fake_clock=True)
-        receiver.process.send_signal(signal.SIGSTOP)
-        time.sleep(0.04)
+        receiver = Receiver(self, idle=True, delay=80, fake_clock=True, poll_gate=True)
+        # Park at poll, after the current iteration's socket and clock checks.
+        # Arbitrary SIGSTOP could freeze between those checks and synthesize
+        # a deadline jump after the receiver had already found no queued data.
+        self.assertTrue(wait_until(lambda: receiver.read(receiver.poll_gate_path).strip() == "parked"),
+                        receiver.errors())
         receiver.set_clock(61000)
         receiver.send(opc(0x123456))
-        receiver.process.send_signal(signal.SIGCONT)
+        receiver.release_poll()
         self.assertTrue(wait_until(lambda: receiver.colors() == [0x123456]))
         time.sleep(0.35)
         self.assertEqual(receiver.stop(), 0)

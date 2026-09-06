@@ -66,7 +66,7 @@ build/test-flash: tests/test_flash.c src/dld_flash.c src/dld_flash.h | build
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ tests/test_flash.c src/dld_flash.c
 
 build/test-udp: src/dld_udp.c src/dld_opc.c src/dld_opc.h src/dld_flash.c src/dld_flash.h src/dld_sender.h tests/fake_udp_sender.c | build
-	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -Wl,--wrap=clock_gettime -o $@ src/dld_udp.c src/dld_opc.c src/dld_flash.c tests/fake_udp_sender.c $(LDLIBS)
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -Wl,--wrap=clock_gettime -Wl,--wrap=poll -o $@ src/dld_udp.c src/dld_opc.c src/dld_flash.c tests/fake_udp_sender.c $(LDLIBS)
 
 build/test-admission: tests/test_admission.c kernel/dld_admission.h | build
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ tests/test_admission.c $(LDLIBS)

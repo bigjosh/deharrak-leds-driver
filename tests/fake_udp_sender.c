@@ -4,6 +4,7 @@
 
 #include <errno.h>
 #include <inttypes.h>
+#include <poll.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -37,6 +38,39 @@ int __wrap_clock_gettime(clockid_t id, struct timespec *stamp)
     stamp->tv_sec += (time_t)(offset / 1000 + ns / UINT64_C(1000000000));
     stamp->tv_nsec = (long)(ns % UINT64_C(1000000000));
     return 0;
+}
+
+/* Park only the first idle poll when requested by the test. This places the
+ * queued-input test at a known loop boundary, unlike an arbitrary SIGSTOP
+ * that may land between the empty socket check and the clock read.
+ */
+int __real_poll(struct pollfd *fds, nfds_t count, int timeout);
+int __wrap_poll(struct pollfd *fds, nfds_t count, int timeout)
+{
+    static int first = 1;
+    const char *path = getenv("DLD_TEST_POLL_GATE");
+    if (first && path != NULL) {
+        FILE *gate;
+        struct timespec pause = {0, 10000000L};
+        first = 0;
+        gate = fopen(path, "w");
+        if (gate == NULL) return -1;
+        fputs("parked\n", gate);
+        if (fclose(gate) != 0) return -1;
+        while (!dld_cancelled) {
+            char state[16] = "";
+            int released;
+            gate = fopen(path, "r");
+            if (gate == NULL) return -1;
+            released = fscanf(gate, "%15s", state) == 1 &&
+                       !strcmp(state, "release");
+            fclose(gate);
+            if (released) break;
+            nanosleep(&pause, NULL);
+        }
+        if (dld_cancelled) { errno = EINTR; return -1; }
+    }
+    return __real_poll(fds, count, timeout);
 }
 
 static void cancelled(int number) { dld_cancelled = number; }

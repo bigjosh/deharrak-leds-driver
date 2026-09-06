@@ -1,107 +1,84 @@
 # Deharrak LED driver
 
-First-pass uniform-color driver for the deployed BeagleBone Green/Linux
-3.8.13-bone80 system. It supplies two commands:
+DLD drives the Deharrak Clock's LED panels from a BeagleBone Green. It replaces
+LEDscape's rendering role with two commands: initialize a panel once, then send
+a color whenever the display needs to change. Each panel supports six strings
+of up to 300 pixels; every enabled pixel receives the same RGB color.
 
 ```sh
-build/dld-init config/panel.example.json
-build/dld-send 00FF00
+# On a prepared BBG, from the build's source directory:
+build/dld-init config/panel.json
+build/dld-send FF0000  # Red
+build/dld-send 00FF00  # Green
+build/dld-send 000000  # Black
 ```
 
-`dld-init` reads a pixel profile and six string lengths, makes all six GPIOs
-outputs held low, and starts the embedded PRU0 firmware. It sends no pixel
-data. `dld-send` reuses that initialization, sends exactly the configured
-length on each enabled string, waits through final settling, and checks the
-PRU completion. The ABI4 firmware waits for a kernel grant before each bank.
-`dld-send` requires the matching `dld_quiet.ko` helper and never falls back to
-unprotected output. After success, both commands exit while the PRU and
-configuration remain. Neither initialization nor cleanup sends a black frame.
+The current utility provides the local command interface and protected PRU
+output. Automatic startup and the network receiver that will connect it to
+the clock controller are the next integration work. Use the setup below for
+manual operation on the supported board.
 
-The first pass is diagnostic. Protected header captures provide physical timing
-evidence; installed pixel family, color order, downstream timing, and chain
-settling still require qualification. See the [current physical bench
-report](docs/validation-20260906.md), [initial bring-up report](docs/validation.md),
-and [spec.md](spec.md) for measured evidence and the full contract.
+## How it works
 
-The September 6 protected endurance run completed fourteen full phases and a
-shortened final black phase: 155,917 successful sends, no failed sends, and
-no observed waveform violations in 4,452,206,525 complete captured pulses.
-The recorded intervals total 18,257.095062016 seconds; acquisition gaps remain
-unobserved. Verified handback on September 6 at 13:10 UTC left the tested helper and initialized
-six-string session ready, with all six data outputs low. This completes the
-bench endurance work; installed-panel qualification and production rollout
-remain open. This is a historical handback record, not a check of the board's
-present state; the retained `/run` files and initialization do not survive reboot.
+`dld-init CONFIG_FILE` configures all six pins as outputs held low, stores the
+panel configuration in PRU memory, and loads and starts the embedded firmware.
+The firmware and configuration remain after the command exits. Initialization
+sends no pixel data, so it does not turn an already lit panel black.
 
-## Build from Windows on the BBG
+`dld-send RRGGBB` uses that retained configuration and returns only after all
+enabled strings have received the color and the final reset/settling period
+has elapsed. The PRU drives one GPIO bank at a time. Before each bank, the
+required `dld_quiet` kernel helper pauses ARM execution and Ethernet DMA and
+checks the relevant storage/DMA engines for inactivity. Linux and networking
+resume between banks. This protects the GPIO timing on the existing wiring.
 
-Run from the repository root. The Windows PC needs PowerShell plus `ssh`,
-`scp` with legacy-protocol `-O` support, and `tar` on PATH. Root SSH access to
-the chosen BBG must already work without a password prompt, and its host key
-must already be verified in the SSH known-hosts file: the build uses
-`BatchMode=yes`. The default hostname is `beaglebone`.
+The [protected-operation guide](docs/quiet-window.md) explains the timing,
+ownership requirements, and failure handling in detail. The
+[investigation and measurements](docs/validation-20260906.md) explain why this
+approach was chosen and what was tested.
 
-The validated BBG already had GCC 4.6.3, Make 3.81, binutils 2.22, Python 3.2,
-glibc 2.13/armhf, and headers matching Linux `3.8.13-bone80`, including its
-generated configuration and `Module.symvers`. On that environment no new
-packages, paid tools, Windows C compiler, or cross-compilation sysroot are
-needed. Another kernel or userspace is not a validated substitute.
+## Requirements and build
+
+The supported target is the AM335x BeagleBone Green running Linux
+`3.8.13-bone80` with its matching kernel build headers. Run the commands as
+root. The board must have:
+
+- The six pins below already muxed as GPIOs, `uio_pruss` available, and
+  `/dev/mem` access. DLD does not configure pinmux.
+- Exclusive use of both PRUs and the six data pins; LEDscape and any
+  independently launched renderer must be stopped before initialization.
+- Only CPU0 online, fixed at 1 GHz, no swap, and an available PMU cycle
+  counter. The preparation tool below sets the CPU policy and disables the
+  four user-LED triggers.
+- A running interface named `eth0`, driven by `cpsw`, even when every string
+  is disabled. Other peripheral ownership must meet the
+  [supported hardware assumptions](docs/quiet-window.md#dma-checks-and-ownership).
+
+From Windows, build and test in a fresh directory on the BBG:
 
 ```powershell
 .\tools\build-bbg.ps1
 ```
 
-Optional `-HostName HOST` and `-RemoteDirectory /root/dld-NAME` parameters
-select an already configured SSH host and a new directory; the script refuses
-to reuse an existing remote directory.
-
-This creates a new `/root/dld-build-...` directory, copies the source, builds
-the project-local PASM assembler, and runs the automated tests. It leaves
-existing board files and services alone; compilation can still add CPU and
-storage load, so do not run it during an exclusive waveform measurement.
-It retains the source archive and outputs in that new remote directory and
-does not install or load the module. Each build uses its own command
-lock within that new directory. Use both commands from the same build and
-run only one build's initialized session at a time: different build-local
-locks do not coordinate each other.
-
-The full instruction-model audit takes several minutes on the BBG's older
-Python runtime; it is part of the normal test command.
-
-To build manually inside a dedicated source directory on the BBG:
+The script uses `root@beaglebone`, prints the new build directory, and leaves
+services and hardware ownership unchanged. Alternatively, build in a dedicated
+source directory on the BBG:
 
 ```sh
-make -j2 LOCK_PATH="$PWD/dld.lock"
-make LOCK_PATH="$PWD/dld.lock" test report
+make -j2
+make test report
 ```
 
-Without `LOCK_PATH`, the fixed default is `/var/lock/dld.lock`. This is a
-compile-time deployment choice, not an environment override. Run `make clean`
-before changing userspace compiler options or the lock location in an existing
-build. The top-level `clean` target does not clean kernel objects; for a module
-rebuild after changing kernel/build options, also use
-`make -C /lib/modules/$(uname -r)/build M="$PWD/kernel" clean`. `KDIR=/path/to/matching/build`
-overrides the top-level kernel build location.
-Generated userspace/firmware files stay under `build/`; the module is
-`kernel/dld_quiet.ko`. `make` rejects an oversized PRU image;
-the loader checks the image size again before writing instruction RAM.
+The outputs are `build/dld-init`, `build/dld-send`, and
+`kernel/dld_quiet.ko`; firmware is embedded in `dld-init`. Use commands and a
+module from the same build. See the [build guide](docs/build.md) for SSH and
+compiler prerequisites, lock paths, rebuilding, and optional Windows PRU
+assembly. Building and these tests do not load the module or take over the pins.
 
-Optional Windows-only firmware build:
+## Configure a panel
 
-```powershell
-.\tools\build-pru.ps1
-```
-
-This optional path needs an existing GCC-compatible Windows compiler, such as
-MinGW GCC, on PATH; it does not accept MSVC's `cl` command-line syntax. Use
-`-Compiler C:\path\to\gcc.exe` if needed. It writes PASM, firmware, listings,
-and a printed firmware SHA256 under `build/windows-pru/`; compare that hash
-with the native `build/pru.bin` before using the image. It does not build the
-ARM executables or kernel module. The assembler's source and license are under
-`vendor/pasm/`. Offline capture analysis has separate optional Python/NumPy
-requirements in [the checker guide](tools/analyze_capture.md).
-
-## Panel configuration
+Create `config/panel.json` using [the example](config/panel.example.json),
+with the actual pixel profile and number of pixels on each string:
 
 ```json
 {
@@ -110,9 +87,9 @@ requirements in [the checker guide](tools/analyze_capture.md).
 }
 ```
 
-Lengths are exact integers from 0 to 300, in this order:
+Lengths must be integers from 0 through 300, in this order:
 
-| Index | Pin | GPIO |
+| Index | Header pin | GPIO |
 |---:|---|---|
 | 0 | P8_8 | GPIO2[3] |
 | 1 | P8_10 | GPIO2[4] |
@@ -121,148 +98,145 @@ Lengths are exact integers from 0 to 300, in this order:
 | 4 | P8_16 | GPIO1[14] |
 | 5 | P8_18 | GPIO2[1] |
 
-Zero disables a string. Its pin remains low; no black frame is sent to it.
-Changing this file takes effect on the next `dld-init` only. Config files
-reject unknown/duplicate/missing fields, malformed JSON and invalid lengths.
+A zero length disables transmission on that string and holds its pin low.
+It does not clear the string's previously latched color. To turn a string
+black before disabling it, send `000000` while it is still enabled, then
+change the configuration and reinitialize. That send turns every currently
+enabled string black.
 
-The initial profiles are `ws2812b` (GRB wire order), `ws2811-hs` (RGB),
-`ws2812b-bgr` and `ws2811-hs-bgr` (BGR module variants).
-All use your 350 ns zero high, 700 ns one high and 1,200 ns bit period.
-Reset is at least 300 us, with an initial 1 us per forwarding pixel and
-100 us positive margin. These propagation/margin values are engineering
-allowances awaiting measurement, not proven bounds for every LED revision.
+All pixels on a panel use the same profile:
 
-The earlier reference board's LEDscape config says **BGR**; the replacement
-waveform-bench board's config says **GBR** and 100 pixels per string. Neither
-identifies the precise pixel family. The current catalog has no GBR profile.
-Black/white diagnostics are byte-order independent; profile tests verify wire
-encoding, while actual panel color order still requires a separate LED check.
+| `pixel_type` | Wire color order |
+|---|---|
+| `ws2812b` | GRB |
+| `ws2811-hs` | RGB |
+| `ws2812b-bgr` | BGR |
+| `ws2811-hs-bgr` | BGR |
 
-## Hardware handover and use
+Color arguments always use **RRGGBB**; DLD applies the profile's wire order.
+Select the profile for the installed panel. The current catalog has no GBR
+profile, and black/white tests cannot establish color order. All current
+profiles use nominal 350 ns zero-high, 700 ns one-high, and 1,200 ns bit timing;
+reset and propagation allowances are defined in the [specification](spec.md).
+Installed-panel color order and downstream timing still need qualification.
 
-The device tree must already pinmux the six pins as GPIOs. Run as root, with
-`uio_pruss` loaded and `/dev/mem` available for one-time GPIO/clock setup.
-Exclude all other PRU/GPIO users before initialization, including LEDscape.
+The configuration file is read only by `dld-init`. Changes are applied by the
+next initialization; `dld-send` continues using the retained configuration
+until then. A failed initialization can invalidate the previous session.
 
-The protected path requires only CPU0 online, fixed 1 GHz, an available Linux
-PMU cycle counter, and a running `eth0` owned by the `cpsw` driver, even for
-all-disabled sends. It also requires the checked AM335x peripheral
-configuration and exclusive ownership of both PRUs and all six GPIOs. It masks
-IRQ/FIQ and scheduling during each bank, idles CPSW DMA, and verifies MMC/EDMA
-inactivity. Networking resumes between banks; incoming packets can be dropped
-during each idle window. See [the quiet-window guide](docs/quiet-window.md)
-for exact assumptions, restoration, and diagnostic limits.
+## Start the driver
 
-The maximum-length bank timer is 9.24 ms at 300 pixels, plus admission and
-restoration overhead. Transient DMA activity uses a 1 second admission
-deadline and a 10,000-attempt cap, with CPU/CPSW state restored between attempts.
-This never extends a granted bank's timer. Gate and final-completion waits
-have separate 20 ms policies; total command latency also includes Linux
-execution between banks. There is no PRU readiness or completion interrupt.
-The normal bank timer is not a universal interrupt-off bound: a frozen-counter
-fallback can take longer, and a wedged MMIO transaction is outside software
-timeout guarantees.
-
-For a new test session, first exclude independent/manual PRU or GPIO users.
-On the supplied systemd board, the explicit test wrapper stops only
-`ledscape.service`, verifies inactive/failed state with MainPID zero, and
-initializes DLD. Run the following from the chosen build's source directory
-only when that hardware handover is intended:
+Run from the chosen build's source directory on the BBG, as root, after
+excluding independent PRU/GPIO users. These commands prepare the board, load
+the helper, stop the named LEDscape service, and initialize the panel:
 
 ```sh
+set -e
+modprobe uio_pruss
 python3 tools/bench_prepare.py --apply "$PWD/build/preparation-state.json"
 insmod kernel/dld_quiet.ko
-sh tools/start-test.sh config/panel.example.json
-build/dld-send 000000
-build/dld-send FFFFFF
+sh tools/start-test.sh config/panel.json
 ```
 
-The preparation-state filename must be new, with an existing parent directory;
-the script refuses to overwrite saved settings. It fixes CPU frequency and
-disables user-LED triggers, but neither loads the UIO driver nor identifies
-other DMA owners. A preexisting helper or PMU user must be resolved before
-`insmod`; the commands do not replace another loaded module automatically.
-The core `dld-init` does not require the helper, but protected sends and the
-live suites do. `start-test.sh` does not stop a separately launched starfield
-or another service merely because it uses the same PRUs.
+Despite their bench-oriented names, these are the supplied preparation and
+handover tools. `start-test.sh` stops `ledscape.service`, verifies it has
+stopped, and calls `build/dld-init` with your configuration. It does not find
+or stop a separately launched starfield sender or other renderer.
 
-These commands do not edit service files or boot configuration. For an explicitly
-requested return to the original application, stop every send loop, unload
-`dld_quiet` with `rmmod dld_quiet`, restore the saved settings using
-`python3 tools/bench_prepare.py --restore "$PWD/build/preparation-state.json"`,
-then run `systemctl start ledscape.service`. A later DLD session requires the handover
-and initialization again. Restoration is not automatic: the September 6
-handback retains the tested helper and CPU/LED preparation for continued DLD
-use, as recorded in the bench report. The core CLI commands do not manage
-services.
+Use a new preparation-state filename and retain it for restoration. The tool
+saves the prior CPU and user-LED settings and refuses to overwrite that record.
+If this session is already prepared and its matching helper is loaded, skip
+preparation and `insmod`, but still confirm ownership before initialization.
+Run `start-test.sh` if LEDscape's service state is uncertain. Resolve an existing
+module from a different build or a PMU user before loading the helper. Stop on
+any setup error and read its diagnostic before continuing.
 
-Accepted colors are exactly six hexadecimal digits, optionally prefixed by
-`0x` or `0X`. Success is one `OK` line. Errors go to stderr:
+For later configuration changes, stop the calling application, edit the panel
+file, and run:
 
-| Exit | Meaning |
+```sh
+build/dld-init config/panel.json
+```
+
+After reboot, repeat the full startup sequence, including preparation with a
+new state filename, module loading, and initialization. Reestablish ownership
+and initialize again after PRU/GPIO state loss or use by another application.
+Setup currently changes runtime state only; it does not install a boot service
+or disable LEDscape at boot.
+
+## Send colors from an application
+
+Invoke `build/dld-send RRGGBB` synchronously for each update. The argument must
+contain exactly six hexadecimal digits, optionally prefixed with `0x` or `0X`.
+Exit status zero means the PRU reported completion after its final settling
+wait. Success prints one line beginning with `OK`; errors go to stderr.
+
+Wait for one command to finish before starting the next. DLD does not queue
+overlapping commands; a nonblocking lock rejects concurrent initialization or
+sends. Use one build's command pair and lock path for the active session.
+There is no background userspace process to keep alive between updates, and
+no continuous refresh is needed to retain the last color.
+
+A 300-pixel bank uses a nominal 9.24 ms protected window, plus setup and
+restoration overhead. Whole-command latency includes all active banks,
+settling, admission waits, and Linux scheduling between banks. Ethernet
+reception pauses during each window and incoming packets can be lost. The
+future controller integration must account for that; the CLI itself provides
+no network protocol or delivery acknowledgment to a remote controller.
+
+## Handle errors
+
+Check the exit status and preserve stderr before deciding what to do next:
+
+| Exit | Meaning and action |
 |---:|---|
-| 0 | Success |
-| 2 | Invalid arguments/configuration |
-| 3 | Missing privilege/prerequisite or unreadable configuration |
-| 4 | Initialization/load/readiness failure |
-| 5 | Published/uncertain send failure or post-publication cancellation; reinitialize |
-| 6 | Command lock, kernel/network serialization busy, or previous PRU request outstanding |
-| 7 | Invalid/uninitialized mailbox; initialize |
+| 0 | Completed successfully. |
+| 2 | Invalid color, arguments, or configuration; correct the input. |
+| 3 | Missing prerequisite or unreadable configuration; resolve the reported cause. |
+| 4 | Initialization failed; resolve the cause and initialize again. |
+| 5 | Critical or uncertain send failure; stop updates, inspect the error, and reinitialize before resuming. |
+| 6 | Command/session busy; allow the active operation to finish and coordinate callers. |
+| 7 | Invalid or uninitialized session; run `dld-init` with the panel configuration. |
 
-There are no automatic frame or granted-bank retries. A busy rejection or
-prepublication prerequisite failure leaves the active session untouched.
-After publication, the kernel owns completion or failure cleanup even if the
-sender receives `SIGKILL`. Critical failure invalidates the session, attempts
-to stop both PRUs and clear every LED bank, and requires `dld-init`.
-Inaccessible hardware can prevent cleanup; diagnostics report that failure.
-The helper's definitive ioctl `ENOTTY`/`EPERM` rejections return code 3 without
-cleanup. Other syscall failures, including `EFAULT` on result copyout, leave
-submission uncertain and take critical cleanup. Caught `SIGINT`, `SIGTERM`,
-or `SIGHUP` after publication also cause code 5 and cleanup when the CLI regains
-control; `SIGKILL` cannot run userspace cleanup, so the kernel finishes or fails
-the accepted request independently. A successful accepted request can therefore
-remain DONE after its caller was killed.
-Reset after an interrupted frame can latch partial data; it does not restore
-or black out the display.
+DLD never automatically retransmits a failed frame or reinitializes after a
+critical error. After publication, the kernel owns completion or failure cleanup
+even if the sender is killed. Critical cleanup attempts to stop the PRUs and
+hold the outputs low; inaccessible hardware can prevent recovery. Forcing low
+after an interrupted frame can latch partial data and does not black out the
+panel. See [failure and restoration](docs/quiet-window.md#failure-and-restoration)
+for detailed diagnostics and cancellation behavior.
 
-## Tests and scope procedure
+## Return control to LEDscape
 
-`make test` runs pure C and admission-policy checks, CLI rejection and
-mocked ioctl-error tests, an instruction-level
-audit of the assembled PRU binary, and checks of the kernel's emitted ARM loop
-and its Thumb entry bridge for the deployed Thumb-2 kernel.
-It does not touch PRU/GPIO state. See [tests/README.md](tests/README.md) for
-separately invoked live tests and [pru/README.md](pru/README.md) for the timing
-derivation and model limits.
-
-The Python sender, storage-helper, and offline capture-checker tests are
-separate from `make test`; their commands and dependencies are listed in the test guide. For a
-logged, bounded traffic phase, use `tools/bench_sender.py` as documented there.
-
-For each scope phase, initialize once with all six lengths 300. Arm the
-positive pulse-width trigger at greater than 400 ns, then run:
+Stop the calling application and all send loops, and wait for active commands
+to finish. To return to the previous runtime settings and service, use the
+state file saved for this session:
 
 ```sh
-sh tools/endurance.sh 000000 10800
+set -e
+rmmod dld_quiet
+python3 tools/bench_prepare.py --restore "$PWD/build/preparation-state.json"
+systemctl start ledscape.service
 ```
 
-Stop sending, change/rearm the trigger to greater than 800 ns, then run:
+Restoration is explicit. Once LEDscape owns the hardware, perform the handover
+and initialization again before using DLD.
 
-```sh
-sh tools/endurance.sh FFFFFF 10800
-```
+## Reference and project history
 
-This simpler shell wrapper sends sequentially and checks its three-hour limit
-between commands. It stops on a command error, but has no child-process
-watchdog: a hung command can exceed the requested duration. Use the logged
-Python sender when a command watchdog or absolute UTC cutoff is required.
-Record the actual scope setup, pin/bank, duration and any captures. A clean
-run establishes only that no qualifying high pulse was observed on that pin.
-These long-high trigger settings do not test short pulses, data lows, bit
-periods, or all of the checker's ±50 ns windows; use captured-edge analysis
-for those checks.
-The protected kernel windows exclude ordinary ARM execution and quiesce the
-checked DMA engines while pixel data is emitted. Instruction fetches still
-exist; the small loop is warmed in cache before the grant. Physical captures
-remain the acceptance test. The 2026-09-06 userspace-only implementation showed
-repeated GPIO0 timing violations and is no longer the path under qualification.
+The investigation and test records remain part of this repository:
+
+- [Build guide](docs/build.md), [hardware reference](docs/hardware.md), and
+  [full specification](spec.md): supported environment and command contract.
+- [Protected operation](docs/quiet-window.md), [kernel helper](kernel/README.md),
+  and [PRU firmware](pru/README.md): how the timing protection works.
+- [Initial bring-up](docs/validation.md): the first implementation, bus fault,
+  recovery, and software validation.
+- [Waveform investigation and protected endurance results](docs/validation-20260906.md):
+  the observed timing faults, changes, measurements, and remaining limits.
+- [Evidence archive index](docs/evidence/README.md): portable measurements,
+  provenance, and the inventory of larger local captures.
+- [Test procedures](tests/README.md) and [capture analysis](tools/analyze_capture.md):
+  how to reproduce software and waveform checks.
+- [Decisions and remaining work](todo.md): review history, installed-panel
+  qualification, network behavior, and production rollout.

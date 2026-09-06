@@ -17,7 +17,7 @@ if it was overridden. `test-native` depends on `all`, so it also builds the ARM
 commands, firmware, and module against matching installed kernel headers. It
 does not load the module or initialize hardware. `make test` additionally runs
 the PRU machine-code model and linked kernel instruction audit. The supported
-build environment and clean/rebuild rules are in the [main README](../README.md).
+build environment and clean/rebuild rules are in the [build guide](../docs/build.md).
 
 `test_common.c` uses pure functions from `src/dld_common.c`; it does not map devices
 or load firmware. It covers color syntax and byte order, strict JSON configuration
@@ -109,7 +109,7 @@ test directory; no production boot or existing service-file edits are part of th
 test plan.
 
 Before any live suite, apply the fixed-1-GHz/user-LED preparation and load the
-matching `dld_quiet.ko`, following [hardware handover](../README.md#hardware-handover-and-use)
+matching `dld_quiet.ko`, following [driver startup](../README.md#start-the-driver)
 and [quiet-window prerequisites](../docs/quiet-window.md). The module requires
 a running `eth0` whose parent is bound to `cpsw`, an available exclusive PMU
 event, and the documented absence of competing autonomous masters. These
@@ -127,12 +127,40 @@ hardware identity/liveness probe, and explicit reinitialization
 after critical completion failure. Do not inject faults into the production
 LEDscape process or alter the existing deployment to simulate them.
 
-For physical timing and endurance, follow `spec.md` sections 13.4–13.8. In
-particular, the several-hour all-zero and all-one scope runs look for positive
-pulses above 400 ns and 800 ns, respectively. Record the actual pin, profile,
-measurement point, duration, cadence, trigger setup, and capture gaps. A clean run
-means no qualifying pulse was observed in that run; it does not establish complete
-request-to-frame correlation or continuous observation of every output.
+## Oscilloscope endurance procedure
+
+For physical timing and endurance, follow [spec.md](../spec.md) sections
+13.4–13.8. After the exclusive handover, initialize once with all six lengths
+300. Arm the positive pulse-width trigger at greater than 400 ns, then run:
+
+```sh
+sh tools/endurance.sh 000000 10800
+```
+
+Stop sending, change/rearm the trigger to greater than 800 ns, then run:
+
+```sh
+sh tools/endurance.sh FFFFFF 10800
+```
+
+This shell wrapper sends sequentially and checks its three-hour limit between
+commands. It stops on a command error, but has no child-process watchdog: a
+hung command can exceed the requested duration. Use the logged Python sender
+below when a command watchdog or absolute UTC cutoff is required.
+
+Record the actual pin, profile, measurement point, duration, cadence, trigger
+setup, and capture gaps. A clean run means no qualifying high pulse was observed
+on that pin. These trigger settings do not test short pulses, data lows, bit
+periods, or all of the checker's ±50 ns windows; use
+[captured-edge analysis](../tools/analyze_capture.md) for those checks. Neither
+procedure establishes continuous observation through acquisition gaps or, on
+its own, complete request-to-frame correlation.
+
+The kernel excludes ordinary ARM execution and quiesces the checked DMA engines
+while pixel data is emitted. Instruction fetches still exist; the small loop is
+warmed in cache before the grant. Physical captures remain the acceptance test.
+The earlier userspace-only implementation's timing violations and the completed
+protected run are retained in the [bench report](../docs/validation-20260906.md).
 
 ## Explicit live lifecycle harness
 

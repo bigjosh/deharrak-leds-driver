@@ -7,6 +7,7 @@ rather than depending on unittest.mock, which that interpreter lacks.
 from __future__ import print_function
 
 import argparse
+import errno
 import hashlib
 import io
 import json
@@ -124,7 +125,7 @@ class TrialTests(unittest.TestCase):
         self.patches.set(trial.platform, "release", lambda: kernel)
         self.patches.set(trial.platform, "machine", lambda: machine)
         self.patches.set(trial.os.path, "exists", lambda path: loaded if path == "/sys/module/dld_quiet" else False)
-        self.patches.set(trial, "running_dld", lambda: existing)
+        self.patches.set(trial, "running_dld", lambda: [] if existing is None else existing)
 
         def command(argv):
             self.calls.append(list(argv))
@@ -327,15 +328,17 @@ class TrialTests(unittest.TestCase):
         self.assertRaises(trial.TrialError, trial.preflight, self.directory, self.path("panel.json"), manifest)
         self.assertEqual(len(self.calls), 1)
 
-    def test_preflight_loaded_helper_requires_reboot(self):
+    def test_preflight_loaded_helper_can_be_replaced_after_validation(self):
         manifest = self.preflight_fixture(loaded=True)
-        self.assertRaises(trial.TrialError, trial.preflight, self.directory, self.path("panel.json"), manifest)
-        self.assertEqual(len(self.calls), 1)
+        trial.preflight(self.directory, self.path("panel.json"), manifest)
+        self.assertEqual(self.calls[-1][-1], "--check")
+        self.assertFalse(any("rmmod" in call or "--apply" in call for call in self.calls))
 
-    def test_preflight_existing_sender_requires_reboot(self):
-        manifest = self.preflight_fixture(existing="314")
-        self.assertRaises(trial.TrialError, trial.preflight, self.directory, self.path("panel.json"), manifest)
-        self.assertEqual(len(self.calls), 1)
+    def test_preflight_existing_sender_can_be_replaced_after_validation(self):
+        manifest = self.preflight_fixture(existing=[("314", "/run/prior/build/dld-udp", "42")])
+        self.patches.set(trial, "stop_dld", lambda: self.fail("preflight stopped the old sender"))
+        trial.preflight(self.directory, self.path("panel.json"), manifest)
+        self.assertEqual(self.calls[-1][-1], "--check")
 
     def test_preflight_disabled_boot_service_rejected(self):
         manifest = self.preflight_fixture({("systemctl", "is-enabled", "ledscape.service"): "disabled"})
@@ -354,11 +357,18 @@ class TrialTests(unittest.TestCase):
         self.assertRaises(trial.TrialError, trial.preflight, self.directory, self.path("panel.json"), manifest)
         self.assertEqual(self.calls[-1], list(key))
 
-    def swap_fixture(self, failure=None, state="ActiveState=inactive", pid="MainPID=0"):
+    def swap_fixture(self, failure=None, state="ActiveState=inactive", pid="MainPID=0",
+                     loaded=False, stays_loaded=False, new_sender=None, stop_failure=False):
+        module_present = [loaded]
+
         def command(argv):
             self.calls.append(argv)
             if failure is not None and failure(argv):
                 raise trial.TrialError("scripted command failure")
+            if argv == ["rmmod", "dld_quiet"] and not stays_loaded:
+                module_present[0] = False
+            if argv[0] == "insmod":
+                module_present[0] = True
             if argv[-1] == "ActiveState":
                 return state
             if argv[-1] == "MainPID":
@@ -368,21 +378,71 @@ class TrialTests(unittest.TestCase):
         def start(directory, options):
             self.calls.append(["receiver", directory] + options)
             return 123
+
+        def stop():
+            self.calls.append(["stop_dld"])
+            if stop_failure:
+                raise trial.TrialError("old sender did not stop")
+
+        def existing():
+            self.calls.append(["running_dld"])
+            return [] if new_sender is None else new_sender
+
         self.patches.set(trial, "run", command)
         self.patches.set(trial, "start_receiver", start)
+        self.patches.set(trial, "stop_dld", stop)
+        self.patches.set(trial, "running_dld", existing)
+        self.patches.set(trial.os.path, "exists",
+                         lambda path: module_present[0] if path == "/sys/module/dld_quiet" else False)
 
-    def test_swap_orders_preparation_stop_init_then_receiver(self):
+    def test_first_swap_stops_owners_before_preparation_and_initialization(self):
         self.swap_fixture()
         self.assertEqual(trial.swap(self.directory, self.path("panel.json"), ["--no-idle-flash"]), 123)
         self.assertEqual(self.calls, [
-            [sys.executable, "-B", self.path("tools/bench_prepare.py"), "--apply", self.path("preparation.json")],
-            ["modprobe", "uio_pruss"],
-            ["insmod", self.path("kernel/dld_quiet.ko")],
+            ["stop_dld"],
             ["systemctl", "stop", "ledscape.service"],
             ["systemctl", "show", "ledscape.service", "-p", "ActiveState"],
             ["systemctl", "show", "ledscape.service", "-p", "MainPID"],
+            [sys.executable, "-B", self.path("tools/bench_prepare.py"), "--apply", self.path("preparation.json")],
+            ["modprobe", "uio_pruss"],
+            ["insmod", self.path("kernel/dld_quiet.ko")],
+            ["running_dld"],
             [self.path("build/dld-init"), self.path("panel.json")],
             ["receiver", self.directory, "--no-idle-flash"]])
+
+    def test_replacement_stops_owners_then_unloads_before_loading_new_helper(self):
+        self.swap_fixture(loaded=True)
+        self.assertEqual(trial.swap(self.directory, self.path("panel.json"), []), 123)
+        self.assertEqual(self.calls[:5], [
+            ["stop_dld"],
+            ["systemctl", "stop", "ledscape.service"],
+            ["systemctl", "show", "ledscape.service", "-p", "ActiveState"],
+            ["systemctl", "show", "ledscape.service", "-p", "MainPID"],
+            ["rmmod", "dld_quiet"]])
+        self.assertEqual(self.calls[5][3], "--apply")
+        self.assertEqual(self.calls[7], ["insmod", self.path("kernel/dld_quiet.ko")])
+
+    def test_old_sender_shutdown_failure_prevents_all_runtime_commands(self):
+        self.swap_fixture(loaded=True, stop_failure=True)
+        self.assertRaises(trial.TrialError, trial.swap, self.directory, self.path("panel.json"), [])
+        self.assertEqual(self.calls, [["stop_dld"]])
+
+    def test_helper_unload_failure_prevents_preparation_and_new_helper(self):
+        self.swap_fixture(loaded=True, failure=lambda argv: argv[0] == "rmmod")
+        self.assertRaises(trial.TrialError, trial.swap, self.directory, self.path("panel.json"), [])
+        self.assertEqual(self.calls[-1], ["rmmod", "dld_quiet"])
+        self.assertFalse(any("--apply" in call or "insmod" in call for call in self.calls))
+
+    def test_helper_still_loaded_after_rmmod_prevents_reinitialization(self):
+        self.swap_fixture(loaded=True, stays_loaded=True)
+        self.assertRaises(trial.TrialError, trial.swap, self.directory, self.path("panel.json"), [])
+        self.assertEqual(self.calls[-1], ["rmmod", "dld_quiet"])
+
+    def test_sender_reappearing_before_init_prevents_new_receiver(self):
+        self.swap_fixture(new_sender=[("314", "/run/prior/build/dld-udp", "99")])
+        self.assertRaises(trial.TrialError, trial.swap, self.directory, self.path("panel.json"), [])
+        self.assertEqual(self.calls[-1], ["running_dld"])
+        self.assertFalse(any(call[0] == self.path("build/dld-init") for call in self.calls))
 
     def test_failed_service_with_no_process_can_be_replaced(self):
         self.swap_fixture(state="ActiveState=failed")
@@ -523,19 +583,197 @@ class TrialTests(unittest.TestCase):
         self.assertEqual(trial.main(), 1)
         self.assertEqual([event[0] for event in self.events], ["ram", "lock", "extract"])
 
-    def test_running_dld_detects_deleted_executable_and_tolerates_exit_race(self):
-        self.patches.set(trial.os, "listdir", lambda path: ["self", "100", "200"])
-        def readlink(path):
-            if path == "/proc/100/exe":
-                raise OSError("already exited")
-            return "/run/prior/build/dld-udp (deleted)"
-        self.patches.set(trial.os, "readlink", readlink)
-        self.assertEqual(trial.running_dld(), "200")
+    def stat_line(self, start="456", comm="dld-udp"):
+        # /proc/PID/stat field 2 can contain spaces and parentheses; starttime
+        # is field 22. Distinct adjacent values catch an off-by-one parse.
+        return "100 (" + comm + ") " + " ".join(
+            ["S"] + [str(field) for field in range(4, 22)] + [start, "23", "24"])
 
-    def test_running_dld_ignores_unrelated_executables(self):
-        self.patches.set(trial.os, "listdir", lambda path: ["self", "100"])
-        self.patches.set(trial.os, "readlink", lambda path: "/usr/bin/python3")
-        self.assertIsNone(trial.running_dld())
+    def identity_fixture(self, before=None, after=None, executable=None):
+        before = self.stat_line() if before is None else before
+        after = before if after is None else after
+        executable = "/run/prior/build/dld-udp" if executable is None else executable
+        texts = [before, after]
+
+        def read(path):
+            self.calls.append(["read", path])
+            value = texts.pop(0)
+            if isinstance(value, Exception):
+                raise value
+            return value
+
+        def readlink(path):
+            self.calls.append(["readlink", path])
+            if isinstance(executable, Exception):
+                raise executable
+            return executable
+
+        self.patches.set(trial, "read", read)
+        self.patches.set(trial.os, "readlink", readlink)
+
+    def test_process_identity_handles_comm_spaces_and_parentheses(self):
+        self.identity_fixture(before=self.stat_line("98765", "odd (name) tail"))
+        self.assertEqual(trial.process_identity("100"),
+                         ("100", "/run/prior/build/dld-udp", "98765"))
+        self.assertEqual(self.calls, [["read", "/proc/100/stat"],
+                                     ["readlink", "/proc/100/exe"],
+                                     ["read", "/proc/100/stat"]])
+
+    def test_process_identity_retains_deleted_executable_path(self):
+        self.identity_fixture(executable="/run/prior/build/dld-udp (deleted)")
+        self.assertEqual(trial.process_identity("100"),
+                         ("100", "/run/prior/build/dld-udp (deleted)", "456"))
+
+    def test_process_identity_refuses_pid_reused_during_inspection(self):
+        self.identity_fixture(after=self.stat_line("999"))
+        self.assertIsNone(trial.process_identity("100"))
+
+    def test_process_identity_tolerates_exit_before_stat(self):
+        self.identity_fixture(before=OSError(errno.ENOENT, "exited"))
+        self.assertIsNone(trial.process_identity("100"))
+        self.assertEqual(self.calls, [["read", "/proc/100/stat"]])
+
+    def test_process_identity_tolerates_exit_before_executable_read(self):
+        self.identity_fixture(executable=OSError(errno.ESRCH, "exited"))
+        self.assertIsNone(trial.process_identity("100"))
+
+    def test_process_identity_tolerates_exit_after_executable_read(self):
+        self.identity_fixture(after=IOError(errno.ENOENT, "exited"))
+        self.assertIsNone(trial.process_identity("100"))
+
+    def test_process_identity_does_not_hide_permission_failure(self):
+        self.identity_fixture(executable=OSError(errno.EACCES, "denied"))
+        self.assertRaises(OSError, trial.process_identity, "100")
+
+    def test_running_dld_finds_all_command_types_and_deleted_executables(self):
+        identities = {"100": None,
+                      "200": ("200", "/run/prior/build/dld-udp (deleted)", "22"),
+                      "300": ("300", "/opt/dld/bin/dld-send", "33"),
+                      "400": ("400", "/run/new/build/dld-init", "44")}
+        self.patches.set(trial.os, "listdir", lambda path: ["self", "100", "200", "300", "400"])
+        self.patches.set(trial, "process_identity", lambda pid: identities[pid])
+        self.assertEqual(trial.running_dld(), [identities[pid] for pid in ("200", "300", "400")])
+
+    def test_running_dld_ignores_unrelated_and_similarly_named_executables(self):
+        names = ["python3", "dld-udp-backup", "my-dld-send", "dld-init.sh",
+                 "dld-udp (deleted)extra", "dld-udp (deleted) (deleted)"]
+        identities = dict((str(index), (str(index), "/opt/" + name, "42"))
+                          for index, name in enumerate(names))
+        self.patches.set(trial.os, "listdir", lambda path: ["self"] + list(identities))
+        self.patches.set(trial, "process_identity", lambda pid: identities[pid])
+        self.assertEqual(trial.running_dld(), [])
+
+    def stopping_fixture(self, snapshots, identities=None, kill_error=None,
+                         reverse_clock=False):
+        snapshots = list(snapshots)
+        originals = dict((identity[0], identity) for identity in snapshots[0])
+        if identities is not None:
+            originals.update(identities)
+        self.signals = []
+        self.sleeps = []
+        self.now = 100.0
+
+        def running():
+            self.calls.append(["running_dld"])
+            return snapshots.pop(0) if len(snapshots) > 1 else snapshots[0]
+
+        def identity(pid):
+            self.calls.append(["identity", pid])
+            return originals[pid]
+
+        def kill(pid, sig):
+            self.signals.append((pid, sig))
+            if kill_error is not None:
+                raise kill_error
+
+        def sleep(seconds):
+            self.sleeps.append(seconds)
+            self.now += -10.0 if reverse_clock else seconds
+
+        self.patches.set(trial, "running_dld", running)
+        self.patches.set(trial, "process_identity", identity)
+        self.patches.set(trial.os, "kill", kill)
+        self.patches.set(trial.time, "time", lambda: self.now)
+        self.patches.set(trial.time, "sleep", sleep)
+
+    def test_stop_without_dld_sends_no_signals_and_does_not_sleep(self):
+        self.stopping_fixture([[]])
+        trial.stop_dld()
+        self.assertEqual(self.signals, [])
+        self.assertEqual(self.sleeps, [])
+
+    def test_stop_waits_for_all_original_commands_to_finish(self):
+        udp = ("100", "/run/prior/build/dld-udp", "11")
+        send = ("200", "/run/prior/build/dld-send", "22")
+        init = ("300", "/run/prior/build/dld-init", "33")
+        self.stopping_fixture([[udp, send, init], [udp, send], [send], []])
+        trial.stop_dld()
+        self.assertEqual(self.signals, [(100, trial.signal.SIGTERM),
+                                       (200, trial.signal.SIGTERM),
+                                       (300, trial.signal.SIGTERM)])
+        self.assertEqual(len(self.sleeps), 2)
+        self.assertEqual(self.calls[:4], [["running_dld"], ["identity", "100"],
+                                         ["identity", "200"], ["identity", "300"]])
+
+    def test_stop_does_not_signal_process_that_exited_before_revalidation(self):
+        old = ("100", "/run/prior/build/dld-udp", "11")
+        self.stopping_fixture([[old], []], identities={"100": None})
+        trial.stop_dld()
+        self.assertEqual(self.signals, [])
+
+    def test_stop_does_not_signal_unrelated_process_reusing_pid(self):
+        old = ("100", "/run/prior/build/dld-udp", "11")
+        other = ("100", "/usr/bin/python3", "99")
+        self.stopping_fixture([[old], []], identities={"100": other})
+        trial.stop_dld()
+        self.assertEqual(self.signals, [])
+
+    def test_stop_detects_dld_reusing_pid_without_signaling_it(self):
+        old = ("100", "/run/prior/build/dld-udp", "11")
+        replacement = ("100", "/run/prior/build/dld-udp", "99")
+        self.stopping_fixture([[old], [replacement]], identities={"100": replacement})
+        self.assertRaises(trial.TrialError, trial.stop_dld)
+        self.assertEqual(self.signals, [])
+
+    def test_stop_tolerates_exit_between_revalidation_and_sigterm(self):
+        old = ("100", "/run/prior/build/dld-udp", "11")
+        self.stopping_fixture([[old], []], kill_error=OSError(errno.ESRCH, "exited"))
+        trial.stop_dld()
+        self.assertEqual(self.signals, [(100, trial.signal.SIGTERM)])
+
+    def test_stop_does_not_hide_signal_permission_failure(self):
+        old = ("100", "/run/prior/build/dld-udp", "11")
+        self.stopping_fixture([[old]], kill_error=OSError(errno.EPERM, "denied"))
+        self.assertRaises(OSError, trial.stop_dld)
+        self.assertEqual(self.signals, [(100, trial.signal.SIGTERM)])
+        self.assertEqual(self.sleeps, [])
+
+    def test_stop_detects_supervisor_respawn_and_does_not_kill_replacement(self):
+        old = ("100", "/run/prior/build/dld-udp", "11")
+        replacement = ("200", "/run/prior/build/dld-udp", "99")
+        self.stopping_fixture([[old], [old], [replacement]])
+        self.assertRaises(trial.TrialError, trial.stop_dld)
+        self.assertEqual(self.signals, [(100, trial.signal.SIGTERM)])
+
+    def test_stop_detects_new_dld_after_initially_empty_scan(self):
+        replacement = ("200", "/run/prior/build/dld-udp", "99")
+        self.stopping_fixture([[], [replacement]])
+        self.assertRaises(trial.TrialError, trial.stop_dld)
+        self.assertEqual(self.signals, [])
+
+    def test_stop_timeout_leaves_inflight_process_without_sigkill(self):
+        old = ("100", "/run/prior/build/dld-udp", "11")
+        self.stopping_fixture([[old]])
+        self.assertRaises(trial.TrialError, trial.stop_dld, 0.2)
+        self.assertEqual(self.signals, [(100, trial.signal.SIGTERM)])
+        self.assertLessEqual(len(self.sleeps), 3)
+
+    def test_stop_timeout_is_bounded_when_wall_clock_moves_backward(self):
+        old = ("100", "/run/prior/build/dld-udp", "11")
+        self.stopping_fixture([[old]], reverse_clock=True)
+        self.assertRaises(trial.TrialError, trial.stop_dld, 0.2)
+        self.assertEqual(self.signals, [(100, trial.signal.SIGTERM)])
+        self.assertLessEqual(len(self.sleeps), 3)
 
 
 if __name__ == "__main__":

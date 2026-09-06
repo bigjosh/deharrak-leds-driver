@@ -33,10 +33,12 @@ configuration:
 sh tools/deploy-trial.sh 192.168.1.50 config/panel.json
 ```
 
-The launcher copies the bundle into a fresh `/run` directory, prepares the
-driver, stops LEDscape, initializes the panel, and starts `dld-udp` independently
-of the SSH connection. It changes runtime state without installing a service
-or disabling LEDscape at boot. Reboot is the recovery procedure.
+The launcher automatically accepts the target's SSH host key and copies the
+bundle into a fresh `/run` directory. After validation, it stops any existing
+DLD session and LEDscape, replaces the helper, initializes the panel, and
+starts `dld-udp` independently of SSH. Rerun the same command to update an
+existing trial without rebooting. It changes runtime state without installing
+a service or disabling LEDscape at boot. Reboot is the recovery procedure.
 
 ## How it works
 

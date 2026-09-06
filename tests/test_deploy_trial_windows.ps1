@@ -82,12 +82,20 @@ function Assert-Handover($Run, [string]$Mode, [string]$Bundle, [string]$HostName
     Assert-Equal $Run.Calls.Count 5 "$Mode call count"
     Assert-Equal (($Run.Calls | ForEach-Object { $_.Tool }) -join ',') 'ssh,scp,scp,scp,ssh' "$Mode call sequence"
     foreach ($dldCall in $Run.Calls) {
-        foreach ($dldOption in @('BatchMode=yes', 'ConnectTimeout=10', 'StrictHostKeyChecking=yes')) {
-            Assert-Equal ($dldCall.Arguments -ccontains $dldOption) $true "$Mode strict SSH option $dldOption"
-        }
+        $dldExpectedOptions = @('BatchMode=yes', 'ConnectTimeout=10', 'StrictHostKeyChecking=no',
+            'CheckHostIP=no', 'GlobalKnownHostsFile=NUL')
         if ($Known) {
-            Assert-Equal ($dldCall.Arguments -ccontains ('UserKnownHostsFile="' + $Known.Replace('\', '/') + '"')) $true "$Mode known-hosts quoting"
+            $dldExpectedOptions += 'UserKnownHostsFile="' + $Known.Replace('\', '/') + '"'
+        } else {
+            $dldExpectedOptions += 'UserKnownHostsFile=NUL'
         }
+        $dldActualOptions = @()
+        for ($dldOptionIndex = 0; $dldOptionIndex -lt $dldCall.Arguments.Count - 1; ++$dldOptionIndex) {
+            if ($dldCall.Arguments[$dldOptionIndex] -ceq '-o') {
+                $dldActualOptions += $dldCall.Arguments[$dldOptionIndex + 1]
+            }
+        }
+        Assert-Equal ($dldActualOptions -join "`n") ($dldExpectedOptions -join "`n") "$Mode host-key acceptance options"
     }
     Assert-Equal $Run.Calls[0].Arguments[-2] "root@$HostName" "$Mode SSH destination"
     $dldScpHost = $HostName

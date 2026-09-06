@@ -3,12 +3,14 @@
 from __future__ import print_function
 
 import argparse
+import errno
 import fcntl
 import hashlib
 import json
 import os
 import platform
 import re
+import signal
 import stat
 import subprocess
 import sys
@@ -128,18 +130,67 @@ def check_ram(directory):
         raise TrialError("swap must be absent for this RAM-only trial")
 
 
+def process_identity(pid):
+    """Check executable and start time, not a potentially stale udp.pid file."""
+    base = "/proc/" + pid
+    try:
+        before = read(base + "/stat").rsplit(")", 1)[1].split()[19]
+        target = os.readlink(base + "/exe")
+        after = read(base + "/stat").rsplit(")", 1)[1].split()[19]
+    except (IOError, OSError) as error:
+        if error.errno in (errno.ENOENT, errno.ESRCH):
+            return None  # Exited processes (including zombies) have no exe.
+        raise
+    if before != after:
+        return None  # PID was reused while inspecting it.
+    return (pid, target, before)
+
+
 def running_dld():
     names = set(["dld-init", "dld-send", "dld-udp"])
+    processes = []
     for entry in os.listdir("/proc"):
         if not entry.isdigit():
             continue
+        identity = process_identity(entry)
+        if identity is not None:
+            name = os.path.basename(identity[1])
+            if name.endswith(" (deleted)"):
+                name = name[:-10]
+            if name in names:
+                processes.append(identity)
+    return processes
+
+
+def stop_dld(timeout=20.0):
+    """Let in-flight sends finish before unloading the helper; never force kill."""
+    existing = running_dld()
+    for identity in existing:
+        pid, executable, unused_start = identity
+        if process_identity(pid) != identity:
+            continue
         try:
-            target = os.readlink("/proc/" + entry + "/exe")
-        except OSError:
-            continue  # A process can exit while /proc is being inspected.
-        if os.path.basename(target).replace(" (deleted)", "") in names:
-            return entry
-    return None
+            os.kill(int(pid), signal.SIGTERM)
+        except OSError as error:
+            if error.errno != errno.ESRCH:
+                raise
+        # Log after signaling: a blocked output pipe must not delay the signal
+        # after its final identity check on this pre-pidfd kernel.
+        say("Stopping existing DLD: PID {0}; {1}".format(pid, executable))
+    deadline = time.time() + timeout
+    # Python 3.2 has no time.monotonic; bound iterations as well as wall time.
+    for unused in range(max(1, int(timeout / 0.1) + 1)):
+        remaining = running_dld()
+        if not remaining:
+            if existing:
+                say("Existing DLD processes stopped.")
+            return
+        if any(identity not in existing for identity in remaining):
+            raise TrialError("another DLD process started during handover; stop its supervisor before retrying")
+        if time.time() >= deadline:
+            break
+        time.sleep(0.1)
+    raise TrialError("DLD shutdown timed out; helper retained, no process was force-killed")
 
 
 def preflight(directory, panel, manifest):
@@ -148,11 +199,6 @@ def preflight(directory, panel, manifest):
             manifest.get("kernel_release") != platform.release() or
             not platform.machine().startswith("armv7")):
         raise TrialError("bundle requires the reference ARMv7 Linux 3.8.13-bone80 BBG")
-    if os.path.exists("/sys/module/" + MODULE_NAME):
-        raise TrialError("dld_quiet is already loaded; reboot before a new trial")
-    existing = running_dld()
-    if existing:
-        raise TrialError("DLD process {0} is already running; reboot before a new trial".format(existing))
     if run(["systemctl", "is-enabled", "ledscape.service"]) != "enabled":
         raise TrialError("LEDscape must already be enabled at boot for reboot recovery")
     if run(["systemctl", "show", "ledscape.service", "-p", "LoadState"]) != "LoadState=loaded":
@@ -198,15 +244,23 @@ def start_receiver(directory, options, timeout=20.0):
 
 
 def swap(directory, panel, udp_options):
-    run([sys.executable, "-B", os.path.join(directory, "tools/bench_prepare.py"),
-         "--apply", os.path.join(directory, "preparation.json")])
-    run(["modprobe", "uio_pruss"])
-    run(["insmod", os.path.join(directory, "kernel/dld_quiet.ko")])
+    # Everything staged above has passed validation before interrupting output.
+    stop_dld()
     run(["systemctl", "stop", "ledscape.service"])
     state = run(["systemctl", "show", "ledscape.service", "-p", "ActiveState"])
     pid = run(["systemctl", "show", "ledscape.service", "-p", "MainPID"])
     if state not in ("ActiveState=inactive", "ActiveState=failed") or pid != "MainPID=0":
         raise TrialError("LEDscape did not stop; refusing to initialize")
+    if os.path.exists("/sys/module/" + MODULE_NAME):
+        run(["rmmod", MODULE_NAME])
+        if os.path.exists("/sys/module/" + MODULE_NAME):
+            raise TrialError("old dld_quiet helper is still loaded; refusing to initialize")
+    run([sys.executable, "-B", os.path.join(directory, "tools/bench_prepare.py"),
+         "--apply", os.path.join(directory, "preparation.json")])
+    run(["modprobe", "uio_pruss"])
+    run(["insmod", os.path.join(directory, "kernel/dld_quiet.ko")])
+    if running_dld():
+        raise TrialError("another DLD process started during handover; refusing to initialize")
     run([os.path.join(directory, "build/dld-init"), panel])
     return start_receiver(directory, udp_options)
 

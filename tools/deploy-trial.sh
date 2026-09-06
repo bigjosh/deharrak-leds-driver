@@ -76,8 +76,15 @@ fi
 bundle=$(CDPATH= cd -- "$(dirname -- "$bundle")" && printf '%s/%s' "$(pwd)" "$(basename -- "$bundle")")
 panel=$(CDPATH= cd -- "$(dirname -- "$panel")" && printf '%s/%s' "$(pwd)" "$(basename -- "$panel")")
 
-set -- -o BatchMode=yes -o ConnectTimeout=10 -o StrictHostKeyChecking=yes
-if [ -n "$known_hosts" ]; then set -- "$@" -o "UserKnownHostsFile=\"$known_hosts\""; fi
+# Accept keys for this deployment, including a different board reusing an IP.
+# Normal SSH trust files are untouched; --known-hosts optionally records keys.
+set -- -o BatchMode=yes -o ConnectTimeout=10 -o StrictHostKeyChecking=no \
+    -o CheckHostIP=no -o GlobalKnownHostsFile=/dev/null
+if [ -n "$known_hosts" ]; then
+    set -- "$@" -o "UserKnownHostsFile=\"$known_hosts\""
+else
+    set -- "$@" -o UserKnownHostsFile=/dev/null
+fi
 
 # Keep all writes beneath a fresh tmpfs directory. The bootstrap repeats these
 # checks and verifies the complete bundle before any service/runtime changes.

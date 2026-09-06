@@ -130,11 +130,14 @@ Item 13 supersedes its earlier deferral. The remaining unchecked items are follo
     runtime prerequisites, initialize the panel, and detach `dld-udp` from SSH.
   - Package all commands with the common `/run/dld.lock` path. Keep DLD files,
     preparation records, and receiver logs in RAM; change no installed files,
-    service definitions, or boot enablement. Preserve strict SSH host-key
-    verification and fail on setup errors. Require LEDscape already enabled
-    at boot, and reject an existing DLD process or loaded helper before the
-    handover. Serialize deployments with `/run/dld-trial.lock` and wait for
-    receiver readiness before reporting success.
+    service definitions, or boot enablement. Accept SSH host keys automatically,
+    including reused target addresses, without changing global SSH settings.
+    Require LEDscape already enabled at boot. Validate the new bundle before
+    gracefully stopping existing DLD commands, unloading their helper, and
+    starting the replacement. Allow repeated deployments without reboot;
+    retain previous trial directories and logs. Serialize deployments with
+    `/run/dld-trial.lock`, fail on shutdown/setup errors, and wait for receiver
+    readiness before reporting success.
   - Recovery is reboot through the existing LEDscape boot setup. No rollback
     automation or persistent DLD service is added. Software checks of packaging
     and launch behavior do not replace physical handover and installed-panel

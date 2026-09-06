@@ -42,12 +42,18 @@ try {
     }
     $dldBundle = (Resolve-Path -LiteralPath $Bundle).ProviderPath
     $dldPanel = (Resolve-Path -LiteralPath $PanelConfig).ProviderPath
-    $dldSshOptions = @('-o', 'BatchMode=yes', '-o', 'ConnectTimeout=10', '-o', 'StrictHostKeyChecking=yes')
+    # These bench targets can reuse an address after changing boards. Accept
+    # their keys for this deployment without reading or changing normal SSH
+    # trust files. An explicit -KnownHosts file remains available for recording.
+    $dldSshOptions = @('-o', 'BatchMode=yes', '-o', 'ConnectTimeout=10',
+        '-o', 'StrictHostKeyChecking=no', '-o', 'CheckHostIP=no', '-o', 'GlobalKnownHostsFile=NUL')
     if ($KnownHosts) {
         if (-not (Test-Path -LiteralPath $KnownHosts -PathType Leaf)) { throw "Cannot read known-hosts file: $KnownHosts" }
         $dldKnownHosts = (Resolve-Path -LiteralPath $KnownHosts).ProviderPath.Replace('\', '/')
         if ($dldKnownHosts.Contains('"') -or $dldKnownHosts.Contains("`n") -or $dldKnownHosts.Contains("`r")) { throw 'Invalid known-hosts path.' }
         $dldSshOptions += @('-o', ('UserKnownHostsFile="{0}"' -f $dldKnownHosts))
+    } else {
+        $dldSshOptions += @('-o', 'UserKnownHostsFile=NUL')
     }
 
     # Bypass Windows PowerShell's legacy native argument binder: it can split

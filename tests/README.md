@@ -75,8 +75,10 @@ brightness with slow sends, inactivity recurrence, and activity from rejected
 packets. They also exercise valid-packet takeover between flash frames and
 the existing signal/fatal-error rules. The test executable alone wraps
 `clock_gettime`; an offset file lets the harness advance inactivity time
-without waiting a real minute, and simulate clock-read failure. The product
-has no clock override or configurable flash duration. Simulated send duration
+without waiting a real minute, and simulate clock-read failure. A test-only
+`poll` wrapper parks the queued-packet priority case at a known loop boundary
+before advancing time and queuing input. The product has neither override
+nor a configurable flash duration. Simulated send duration
 and time do not establish the animation's appearance on the installed panel.
 
 These checks are included in `make test-native`. To rerun just the packet,
@@ -138,17 +140,18 @@ The remote-handover suite supports Python 3.2 and later without extra packages,
 including on Windows. It replaces
 system, subprocess, service, kernel, and process observations with controlled
 test doubles and writes only temporary local files. It covers bundle integrity
-and unsafe archive entries, prerequisite checks before runtime changes, failure
+and unsafe archive entries, prerequisite checks before runtime changes,
+graceful shutdown of existing DLD commands, helper replacement and failure
 ordering during handover, and detached receiver readiness and liveness.
 It does not connect over SSH, run native DLD commands, load a module, stop
 LEDscape, or access GPIO/PRU hardware.
 
-`test_deploy_trial.py` runs nine POSIX launcher cases with fake `ssh` and `scp`
+`test_deploy_trial.py` runs POSIX launcher cases with fake `ssh` and `scp`
 executables placed first on a private test PATH. It checks transfer/handover
-ordering, paths containing spaces, numeric IPv6 and flash options, strict host
-verification, rejected arguments and unsafe remote-directory responses, and
-failure propagation. It runs on Linux and skips on Windows; it never contacts
-a target.
+ordering, paths containing spaces, numeric IPv6 and flash options, automatic
+host-key acceptance and known-hosts options, rejected arguments and unsafe
+remote-directory responses, and failure propagation. It runs on Linux and skips
+on Windows; it never contacts a target.
 
 On Windows, run the launcher regression through Windows PowerShell 5.1:
 
@@ -158,11 +161,11 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tests\test_deploy_tria
 
 This builds local fake SSH/SCP executables and invokes the batch/PowerShell
 launchers from an isolated fixture checkout. It checks the two-argument batch
-invocation with the default bundle, location-independent paths, explicit
-options, missing files, failure exit codes, and native stderr forwarding,
-including diagnostics larger than a pipe buffer. No network connection or
-hardware handover occurs. The execution-policy override applies only to the
-test process; the machine's policy stays unchanged.
+invocation with the default bundle, location-independent paths, automatic
+host-key acceptance and explicit options, missing files, failure exit codes,
+and native stderr forwarding, including diagnostics larger than a pipe buffer.
+No network connection or hardware handover occurs. The execution-policy
+override applies only to the test process; the machine's policy stays unchanged.
 
 Creating a [trial bundle](../docs/trial.md#build-the-bundle-once) compiles in a
 fresh native workspace. That checks build compatibility; executing either

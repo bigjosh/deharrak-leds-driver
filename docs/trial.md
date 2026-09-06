@@ -1,10 +1,12 @@
 # Temporary replacement over SSH
 
 The trial launchers copy a native DLD bundle and your panel configuration into
-a new `/run/dld-trial.XXXXXX` directory on the BBG, stop `ledscape.service`,
-initialize DLD, and leave `dld-udp` running after SSH disconnects. They do not install
-software, edit service files, or disable LEDscape at boot. Reboot clears the
-trial and lets the board's existing boot configuration start LEDscape again.
+a new `/run/dld-trial.XXXXXX` directory on the BBG, stop an existing DLD session
+and `ledscape.service`, initialize DLD, and leave `dld-udp` running after SSH
+disconnects. Run the same command again to deploy a new bundle or configuration;
+no reboot is required between trials. The launchers do not install software,
+edit service files, or disable LEDscape at boot. Reboot clears the trial and
+lets the board's existing boot configuration start LEDscape again.
 
 This is an operational handover: running either launcher changes the displayed
 panel. The green startup flash and red inactivity flash are enabled by default.
@@ -17,10 +19,9 @@ color order, electrical timing, or controller-to-panel packet delivery.
   The existing board must provide Python 3, the required runtime libraries,
   `uio_pruss`, systemd, and the prerequisites in the
   [operating guide](../README.md#requirements-and-build).
-- Establish root SSH access through your existing SSH keys, agent, or host
-  configuration. Verify the target's host key first. The launchers use strict
-  host-key checking and noninteractive authentication; they never embed a
-  password or accept an unknown key automatically.
+- Establish root SSH access without an interactive password prompt, through
+  the board's existing authentication setup. The launchers accept the target's
+  SSH host key automatically, including when a different board reuses an IP.
 - Supply a local panel JSON file with the installed pixel profile and six
   string lengths, following [panel configuration](../README.md#configure-a-panel).
   The launchers do not infer this from LEDscape's configuration.
@@ -28,24 +29,23 @@ color order, electrical timing, or controller-to-panel packet delivery.
   handover controls the named `ledscape.service`; it cannot establish exclusive
   ownership against arbitrary hardware users.
 - LEDscape must already be enabled at boot; the preflight checks this without
-  changing its enablement. A loaded `dld_quiet` module or running DLD command
-  causes rejection before LEDscape is stopped. Reboot before replacing an
-  earlier DLD session or starting another trial.
+  changing its enablement. An existing DLD session and loaded `dld_quiet`
+  helper are stopped and replaced after the new bundle passes validation.
 - The scripts require RAM-backed `/run` and no swap so the trial's files
   remain in memory.
 
-## First SSH connection
+## SSH host keys
 
-For a target address used for the first time, establish the SSH connection
-before launching the trial:
+No preliminary SSH connection or host-key confirmation is needed. For their
+own SSH and SCP calls, both launchers disable strict host-key checking and
+ignore the computer's default user and global known-hosts files. This skips
+SSH host identity verification; it also leaves those default files unchanged.
+These options do not change the computer's global SSH configuration.
 
-```sh
-ssh root@192.168.1.50 exit
-```
-
-Confirm the board's host-key fingerprint when prompted. The saved entry is
-address-specific: trusting a hostname does not necessarily establish trust
-for a different IP address. The launchers keep strict checking enabled.
+The optional `-KnownHosts` / `--known-hosts` option selects a separate user
+known-hosts file for recording accepted keys. Strict checking remains disabled
+when this option is supplied. Root authentication must still succeed without
+interaction; accepting a host key does not supply a password or login key.
 
 ## Build the bundle once
 
@@ -101,8 +101,8 @@ execution policy, and no `Set-ExecutionPolicy` command is needed. You can still
 run `deploy-trial.ps1` directly from Windows PowerShell 5.1 or PowerShell 7 if
 your execution policy allows it.
 
-To select a different bundle, a previously verified known-hosts file, or disable
-either flash, pass the same named options through the batch launcher. This
+To select a different bundle, a separate known-hosts file, or disable either
+flash, pass the same named options through the batch launcher. This
 single-line example works in PowerShell and Command Prompt:
 
 ```powershell
@@ -133,6 +133,25 @@ a file on the local computer. Flash options are independent. A valid incoming
 color can interrupt either enabled flash, so continuous controller traffic
 may prevent a complete green startup animation.
 
+## Replacing an existing DLD session
+
+Update the local bundle and/or panel file, then rerun the same launcher command.
+Each attempt uploads into a fresh directory and validates the bundle, panel
+configuration, and prerequisites before interrupting the current session.
+
+The handover finds running `dld-init`, `dld-send`, and `dld-udp` executables,
+requests their termination with `SIGTERM`, and waits up to 20 seconds for them
+to exit. This lets an in-flight transmission finish its cleanup. It then
+stops LEDscape, unloads an existing `dld_quiet` helper normally, applies the
+runtime preparation, loads the new helper, initializes the panel, and starts
+the new receiver. It fails if the old commands do not exit or the
+helper cannot unload; it does not force-kill them or force module removal.
+
+Stop external supervisors or scripts that would restart old DLD commands.
+The handover detects DLD processes directly; it does not change an external
+supervisor's restart policy. Old trial directories and logs remain available
+until reboot, and each successful deployment reports its new directory and PID.
+
 ## What stays temporary
 
 The bundle, copied panel configuration, preparation record, PID, and logs live
@@ -153,10 +172,10 @@ packet handling, status counters, and failure behavior.
 
 ## Startup result and logs
 
-The launcher prints the new trial directory. The remote helper checks the
-bundle, configuration, and prerequisites, applies the runtime preparation,
-loads the modules, then stops LEDscape and verifies it has exited. Successful
-initialization is followed by receiver startup.
+The launcher prints the new trial directory. The remote helper validates the
+new files and prerequisites, replaces any existing DLD session as described
+above, and verifies LEDscape has exited before initializing the panel.
+Successful initialization is followed by receiver startup.
 It waits up to 20 seconds for the exact `dld-udp: ready` message. With the default
 green flash, readiness follows the completed flash or a successful UDP color
 that interrupts it. With `--no-startup-flash`, attachment establishes readiness
@@ -178,23 +197,26 @@ receiver after the launcher returns.
 ## If the swap fails
 
 Exit 255 generally means SSH could not establish the connection. Read the SSH
-diagnostic printed immediately before the launcher's error: it distinguishes
-an unknown/changed host key, an authentication failure, and an unreachable
-target. The Windows launcher forwards these diagnostics explicitly. An unknown
-key for a new address is handled by the first-connection procedure above;
-investigate a changed key before replacing an existing trusted entry.
+diagnostic printed immediately before the launcher's error, such as an
+authentication failure or an unreachable target. The Windows launcher forwards
+these diagnostics explicitly. Unknown or changed host keys are accepted by the
+deployment launchers automatically.
 
-The launchers stop on a failed prerequisite, transfer, initialization, or
-startup check and report the trial directory. No automatic rollback restarts
+The launchers stop on a failed prerequisite, transfer, shutdown, initialization,
+or startup check and report the trial directory. Failed uploads or validation
+leave an existing DLD session running. Once shutdown begins, a later failure
+can leave the panel without a receiver. No automatic rollback restarts
 LEDscape or restores settings. A startup failure requests termination of the
 receiver launched by that attempt. Preserve any needed RAM logs before rebooting;
 they disappear when `/run` is cleared.
 
-Reboot the board through its usual management procedure. Its existing startup
-configuration then takes over. After reboot, rerun the launcher for another
-trial; it creates a fresh directory and initializes a new session.
+If recovery is needed, reboot the board through its usual management procedure.
+Its existing startup configuration then takes over. The launcher can be rerun
+after recovery; routine replacement of a healthy DLD session needs no reboot.
 
 The [validation record](validation-trial.md) describes the completed native,
 mock-handover, launcher, and SSH-detachment checks and their limits.
 The [first live handover record](validation-trial-live.md) covers the subsequent
 authorized deployment to a running BBG.
+The [repeat-deployment record](validation-trial-redeploy.md) covers automatic
+host-key acceptance and replacement of an already-running DLD session.

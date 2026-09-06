@@ -78,15 +78,19 @@ class LauncherTests(unittest.TestCase):
             calls = []
         return process.returncode, out, err, calls
 
-    def test_transfer_and_handover_keep_paths_and_strict_ssh_options(self):
+    def assert_ssh_options(self, calls, known="/dev/null"):
+        expected = ["BatchMode=yes", "ConnectTimeout=10", "StrictHostKeyChecking=no",
+                    "CheckHostIP=no", "GlobalKnownHostsFile=/dev/null",
+                    "UserKnownHostsFile=" + known]
+        for row in calls:
+            options = [row[index + 1] for index, value in enumerate(row[:-1]) if value == "-o"]
+            self.assertEqual(options, expected)
+
+    def test_transfer_and_handover_keep_paths_and_accept_host_keys(self):
         status, out, err, calls = self.launch(options=["--known-hosts", self.known])
         self.assertEqual(status, 0, err)
         self.assertEqual([row[0] for row in calls], ["ssh", "scp", "scp", "scp", "ssh"])
-        for row in calls:
-            self.assertIn("BatchMode=yes", row)
-            self.assertIn("ConnectTimeout=10", row)
-            self.assertIn("StrictHostKeyChecking=yes", row)
-            self.assertIn('UserKnownHostsFile="' + self.known + '"', row)
+        self.assert_ssh_options(calls, '"' + self.known + '"')
         for row, local, remote in zip(calls[1:4],
                 [self.bundle, self.panel, os.path.join(ROOT, "tools", "trial-remote.py")],
                 ["bundle.tar.gz", "panel.json", "trial-bootstrap.py"]):
@@ -95,6 +99,12 @@ class LauncherTests(unittest.TestCase):
             self.assertEqual(row[-1], "root@192.0.2.50:/run/dld-trial.Ab12Z9/" + remote)
         self.assertEqual(calls[-1][-1], "cd /run/dld-trial.Ab12Z9 && python3 -B trial-bootstrap.py --bundle bundle.tar.gz --panel panel.json")
         self.assertIn("DLD trial is running", out)
+
+    def test_default_accepts_host_keys_without_normal_trust_files(self):
+        status, out, err, calls = self.launch()
+        self.assertEqual(status, 0, err)
+        self.assertEqual(len(calls), 5)
+        self.assert_ssh_options(calls)
 
     def test_ipv6_and_flash_options(self):
         status, out, err, calls = self.launch("2001:db8::50",

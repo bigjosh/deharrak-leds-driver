@@ -35,7 +35,7 @@ build/pru_blob.c: build/pru.bin
 build/pru_blob.o: build/pru_blob.c include/dld_abi.h
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
-build/%.o: src/%.c include/dld_abi.h include/dld_profiles.h include/dld_quiet.h src/dld_common.h src/dld_hw.h src/dld_sender.h src/dld_opc.h | build
+build/%.o: src/%.c include/dld_abi.h include/dld_profiles.h include/dld_quiet.h src/dld_common.h src/dld_hw.h src/dld_sender.h src/dld_opc.h src/dld_flash.h | build
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
 build/dld_spin.o: src/dld_spin.S include/dld_abi.h | build
@@ -47,7 +47,7 @@ build/dld-init: build/dld_init.o $(COMMON_OBJECTS) build/pru_blob.o
 build/dld-send: build/dld_send.o $(SENDER_OBJECTS)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
-build/dld-udp: build/dld_udp.o build/dld_opc.o $(SENDER_OBJECTS)
+build/dld-udp: build/dld_udp.o build/dld_opc.o build/dld_flash.o $(SENDER_OBJECTS)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 build/test-common: tests/test_common.c build/dld_common.o build/dld_spin.o
@@ -59,8 +59,11 @@ build/test-send-syscall: tests/test_send_syscall.c src/dld_send.c src/dld_sender
 build/test-opc: tests/test_opc.c src/dld_opc.c src/dld_opc.h | build
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ tests/test_opc.c src/dld_opc.c
 
-build/test-udp: src/dld_udp.c src/dld_opc.c src/dld_opc.h src/dld_sender.h tests/fake_udp_sender.c | build
-	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ src/dld_udp.c src/dld_opc.c tests/fake_udp_sender.c $(LDLIBS)
+build/test-flash: tests/test_flash.c src/dld_flash.c src/dld_flash.h | build
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ tests/test_flash.c src/dld_flash.c
+
+build/test-udp: src/dld_udp.c src/dld_opc.c src/dld_opc.h src/dld_flash.c src/dld_flash.h src/dld_sender.h tests/fake_udp_sender.c | build
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -Wl,--wrap=clock_gettime -o $@ src/dld_udp.c src/dld_opc.c src/dld_flash.c tests/fake_udp_sender.c $(LDLIBS)
 
 build/test-admission: tests/test_admission.c kernel/dld_admission.h | build
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ tests/test_admission.c $(LDLIBS)
@@ -74,11 +77,12 @@ build/hw-probe: tests/hw_probe.c build/dld_hw.o include/dld_abi.h
 build/quiet-kernel-probe: tests/quiet_kernel_probe.c build/dld_hw.o include/dld_quiet.h include/dld_abi.h
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ tests/quiet_kernel_probe.c build/dld_hw.o $(LDLIBS)
 
-test-native: all build/test-common build/test-send-syscall build/test-admission build/test-opc build/test-udp
+test-native: all build/test-common build/test-send-syscall build/test-admission build/test-opc build/test-flash build/test-udp
 	build/test-common
 	build/test-send-syscall
 	build/test-admission
 	build/test-opc
+	build/test-flash
 	$(PYTHON) tests/test_udp.py "$(CURDIR)/build/test-udp"
 	sh tests/test_cli.sh "$(CURDIR)/build"
 
@@ -96,4 +100,4 @@ report: all
 	cat build/build-report.txt
 
 clean:
-	rm -f build/*.o build/dld-init build/dld-send build/dld-udp build/test-common build/test-send-syscall build/test-admission build/test-opc build/test-udp build/bench-spin build/hw-probe build/quiet-kernel-probe build/pasm build/pru.bin build/pru.txt build/pru.lst build/pru_blob.c build/*.dis build/build-report.txt
+	rm -f build/*.o build/dld-init build/dld-send build/dld-udp build/test-common build/test-send-syscall build/test-admission build/test-opc build/test-flash build/test-udp build/bench-spin build/hw-probe build/quiet-kernel-probe build/pasm build/pru.bin build/pru.txt build/pru.lst build/pru_blob.c build/*.dis build/build-report.txt

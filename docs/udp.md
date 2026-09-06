@@ -4,6 +4,8 @@
 packets. It takes the first RGB pixel from each accepted packet and sends that
 color uniformly to every enabled pixel. The standalone `dld-send` command
 remains available, and both programs use the same internal sending code.
+By default the receiver also gives a green startup flash and a periodic red
+flash during UDP inactivity.
 
 ## Start and stop
 
@@ -22,6 +24,13 @@ build/dld-udp --bind 0.0.0.0 --port 7890
 build/dld-udp --bind 192.168.1.50 --port 7890
 ```
 
+Startup and inactivity flashes can be disabled independently. To preserve
+the last displayed color until a valid packet arrives, disable both:
+
+```sh
+build/dld-udp --no-startup-flash --no-idle-flash
+```
+
 Use a numeric IPv4 or IPv6 address assigned to the board, or a wildcard address;
 hostnames are not accepted. `--port` accepts integers from 1 through 65535.
 Run `build/dld-udp --help` for usage without opening devices. The receiver
@@ -33,8 +42,9 @@ the normal DLD preparation and handover requirements still apply.
 
 The process stays in the foreground. Ctrl+C, `SIGTERM`, or `SIGHUP` stops it;
 an idle stop sends no frame and leaves the initialized PRU and last displayed
-color alone. No traffic timeout or demo pattern changes an idle panel. If a
-handled signal interrupts an active send, the shared sender follows the same
+color alone. Stopping between flash frames also sends no extra cleanup color;
+the last completed intermediate color can remain displayed. If a handled
+signal interrupts an active send, the shared sender follows the same
 critical cancellation and cleanup rules as `dld-send`. A submitted kernel
 operation retains ownership until it finishes or cleans up its failure.
 
@@ -44,6 +54,55 @@ An open receiver retains the helper's device reference. Configuration changes
 still use `dld-init CONFIG_FILE`; restart the receiver after successful
 initialization. Production boot-service installation and restart policy are
 not supplied by this shim.
+
+## Startup and inactivity flashes
+
+Both status flashes are enabled by default:
+
+| Flash | When it runs | Disable with |
+|---|---|---|
+| Green (`00FF00`) | Once, after the socket binds and the shared sender opens successfully | `--no-startup-flash` |
+| Red (`FF0000`) | After more than 60 seconds since the latest received datagram or previous red flash | `--no-idle-flash` |
+
+A smooth flash sends black, ramps linearly in the RGB channel value to full
+color over 0.5 seconds, and immediately ramps back to black over another
+0.5 seconds. It uses the existing panel profile and string lengths. This is
+linear digital brightness, with no gamma correction. The animation sends
+one frame through the shared sender, waits for completion including final
+settling, then uses monotonic elapsed time to choose the next color. It has
+no fixed frame rate, frame-count schedule, or sleep between animation frames.
+Elapsed time starts immediately before the initial black send; reaching the
+peak does not restart the clock for the downward ramp. Intermediate levels
+are skipped when sending is slow. The explicit black,
+full-color, and final-black endpoints occur at the first available send
+opportunities; sender latency can extend the visible cycle beyond one second.
+Even when a slow send passes both ramp boundaries, the next frames still
+include full color followed by final black unless a valid packet takes over.
+
+The first inactivity interval starts when the shared sender opens successfully;
+finishing the green startup flash does not reset it. Completing a red flash
+starts the next interval, as does receiving a packet that interrupts it.
+Every datagram successfully read from this bound socket
+counts as activity, even a malformed packet, unsupported command, or packet
+from another sender. The timer measures local receipt, not controller send
+time, network arrival time, or successful color updates. Datagrams lost before
+socket receipt cannot reset it.
+
+Between flash frames, the receiver checks queued packets with the same bounded
+coalescing policy used for normal updates. A valid color interrupts the flash
+and is sent next; the startup flash does not resume. This input check also
+runs before the first flash frame, so a queued valid packet can supersede the
+startup flash entirely. Invalid packets reset the
+inactivity timer but do not replace the displayed color or interrupt a flash
+already in progress. An active frame always finishes before the receiver
+processes incoming data. A flash ends black if it is not interrupted, without
+restoring the preceding UDP color. With `--no-idle-flash`, silence continues
+to hold the last completed color indefinitely.
+
+Flash frames use the same protected sender and fatal-error handling as packet
+frames. They do not reload configuration or modify the kernel/PRU protocol.
+Starting with an invalid initialized session can therefore fail during the
+startup flash, before any packet arrives.
 
 ## Accepted packet format
 
@@ -80,17 +139,18 @@ sock.sendto(bytes.fromhex("00 00 00 03 FF 80 00"), ("beaglebone", 7890))
 sock.close()
 ```
 
-No TCP listener, OPC system-exclusive command, per-pixel output, brightness
-transform, gamma correction, dithering, interpolation, or animation fallback
-is implemented. This is compatibility with the legacy first-pixel color input,
-not a replacement for LEDscape's general-purpose rendering features.
+No TCP listener, OPC system-exclusive command, per-pixel output, or transform
+of incoming RGB values is implemented. The two status flashes are the only
+built-in animations. This is compatibility with the legacy first-pixel color
+input, not a replacement for LEDscape's general-purpose rendering features.
 
 ## Update rate and queued packets
 
-The receiver waits for a datagram, then drains up to **64 datagrams total** in
+Outside a status flash, the receiver waits for a datagram or the inactivity
+deadline, then drains up to **64 datagrams total** in
 that batch without blocking. It sends the newest valid color found in the
 batch. An invalid packet never replaces an already selected valid color. If
-there is no valid packet, it waits for more data without touching the sender.
+there is no valid packet, that batch submits no packet-derived frame.
 The bound prevents a continuous flood from postponing transmission forever;
 larger bursts can require several batches and are not guaranteed to skip
 directly to the newest packet in the entire socket queue.
@@ -105,8 +165,9 @@ on the same basis.
 The socket and kernel queues can drop packets, including while Ethernet DMA is
 paused for a protected bank. The receiver cannot count datagrams that never
 reach its socket. There are no acknowledgments or retries, so a successfully
-sent UDP datagram does not prove a panel update. The panel retains its last
-latched color when no further frame arrives.
+sent UDP datagram does not prove a panel update. Between frames the panel
+retains its last latched color; the default inactivity flash changes that color
+after prolonged silence.
 
 At 20 Hz there are 50 ms between updates. Keeping resources open removes
 process startup and remapping overhead, but does not establish a 50 ms output
@@ -154,14 +215,24 @@ stdout and logs no per-frame success line. On exit the receiver reports:
 | `malformed` | Invalid/truncated packets |
 | `unsupported` | Packets using an unsupported OPC command |
 | `coalesced` | Earlier valid colors replaced within a receive batch |
-| `sent` | Frames the shared sender completed successfully |
+| `sent` | Packet-derived frames the shared sender completed successfully |
+| `flash_frames` | Status-animation frames completed successfully |
+| `startup_flashes` | Green flashes completed through final black |
+| `idle_flashes` | Red flashes completed through final black |
+| `interrupted_flashes` | Flashes interrupted by a valid UDP color |
 
 It also records the caught signal and exit code. A selected frame abandoned by
 shutdown or a sender error can make `valid - coalesced` greater than `sent`.
+`sent` excludes status animation, so packet and flash counts can be inspected
+separately. A completed flash can contain many `flash_frames`; interrupted or
+failed flashes can leave completed animation frames without a completed-flash
+count. `interrupted_flashes` counts packet takeover, not signal cancellation.
 These are local counters, not remote completion acknowledgments or a count of
 network losses. Keep logs outside the timing capture interval if they would
 add storage activity. The
 [test guide](../tests/README.md) separates software packet/lifecycle checks from
 future live packet-loss, cadence, and waveform qualification.
-The [implementation validation record](validation-udp.md) records the native
-build, software results, and artifact identities.
+The [initial shim validation record](validation-udp.md) preserves the original
+native build, software results, and artifact identities. The
+[status-flash validation record](validation-flashes.md) covers the later
+animation extension.

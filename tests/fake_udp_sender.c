@@ -3,6 +3,7 @@
 #include "dld_sender.h"
 
 #include <errno.h>
+#include <inttypes.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,6 +13,31 @@
 volatile sig_atomic_t dld_cancelled;
 static FILE *journal;
 static unsigned sent;
+
+/* Linker wrapping is exclusive to test-udp. An atomically replaced file adds
+ * virtual elapsed milliseconds so loopback tests exercise minute-long idle
+ * intervals without waiting a minute. Production has no clock override.
+ */
+int __real_clock_gettime(clockid_t id, struct timespec *stamp);
+int __wrap_clock_gettime(clockid_t id, struct timespec *stamp)
+{
+    const char *path = getenv("DLD_TEST_CLOCK");
+    uint64_t offset = 0, ns;
+    FILE *source;
+    int result = __real_clock_gettime(id, stamp);
+    if (result < 0 || id != CLOCK_MONOTONIC || path == NULL) return result;
+    source = fopen(path, "r");
+    if (source == NULL || fscanf(source, "%" SCNu64, &offset) != 1) {
+        if (source != NULL) fclose(source);
+        errno = EIO;
+        return -1;
+    }
+    fclose(source);
+    ns = (uint64_t)stamp->tv_nsec + (offset % 1000) * UINT64_C(1000000);
+    stamp->tv_sec += (time_t)(offset / 1000 + ns / UINT64_C(1000000000));
+    stamp->tv_nsec = (long)(ns % UINT64_C(1000000000));
+    return 0;
+}
 
 static void cancelled(int number) { dld_cancelled = number; }
 

@@ -84,7 +84,7 @@ Initialization and both senders shall use the same exclusive lock and fail rathe
 ```text
 dld-init CONFIG_FILE
 dld-send color
-dld-udp [--bind ADDRESS] [--port PORT]
+dld-udp [--bind ADDRESS] [--port PORT] [--no-startup-flash] [--no-idle-flash]
 ```
 
 Example:
@@ -219,7 +219,7 @@ Exit codes:
 
 ### 4.5 LEDscape UDP shim (`dld-udp`)
 
-The receiver shall run in the foreground after successful initialization. It shall accept optional `--bind ADDRESS` and `--port PORT`, plus `--help`. Addresses are numeric IPv4 or IPv6 literals; ports are decimal integers 1 through 65535. Defaults are `::` and port 7890, explicitly permitting IPv4 reception on the IPv6 socket. An explicit IPv4 wildcard supports IPv4 unicast and broadcast through the existing network configuration. Binding is exclusive, without socket reuse. The receiver shall not change network or service configuration.
+The receiver shall run in the foreground after successful initialization. It shall accept optional `--bind ADDRESS` and `--port PORT`, independent `--no-startup-flash` and `--no-idle-flash` flags, plus `--help`. Addresses are numeric IPv4 or IPv6 literals; ports are decimal integers 1 through 65535. Defaults are `::` and port 7890, explicitly permitting IPv4 reception on the IPv6 socket. An explicit IPv4 wildcard supports IPv4 unicast and broadcast through the existing network configuration. Binding is exclusive, without socket reuse. The receiver shall not change network or service configuration.
 
 Interpret each UDP datagram as the first OPC message below:
 
@@ -239,7 +239,15 @@ Wait for full completion of the selected frame before receiving the next batch. 
 
 The receiver shall discard malformed or unsupported packets and continue; any sender failure, including busy or invalid session, terminates it with the existing send exit code and no automatic initialization or frame retry. Socket/runtime failures use exit 3 and invalid options use exit 2. Normal startup and exit diagnostics, including local counters, go to stderr; do not log every successful frame or write normal output to stdout. Idle `SIGINT`, `SIGTERM`, or `SIGHUP` stops normally with exit 0 and sends no blackout frame. Once a send starts, its existing cancellation/critical failure contract applies (§9.6).
 
-The shim provides no acknowledgment, packet sequence, duplicate suppression, automatic retransmission, TCP listener, traffic-timeout blackout, demo, gamma correction, dithering, or interpolation. It preserves the last latched color in normal idle operation. Local receive/send counters cannot account for packets dropped before reaching the socket. A 20 Hz source is a workload to test, not a guaranteed 50 ms receive-to-completion deadline. See [UDP operation](docs/udp.md) for setup and packet examples; a possible future reliable protocol remains separate (§14.4).
+Two status flashes are enabled by default. After successful socket binding and shared-sender attachment, run a one-time green (`00FF00`) flash unless `--no-startup-flash` is set. After more than 60 seconds since the latest successfully received datagram or completion of the previous red flash, run a red (`FF0000`) flash unless `--no-idle-flash` is set. Begin the first inactivity interval at successful sender attachment; completing green does not reset it. Every datagram read from this bound socket counts as activity, including malformed or unsupported OPC messages; this is not a timer since the last successful color update. Lost or unread packets do not reset it.
+
+A smooth flash starts black, ramps linearly in its RGB channel value from zero to 255 over 0.5 seconds, and immediately ramps back to black over another 0.5 seconds. Send every animation frame synchronously through the existing shared sender. Anchor monotonic elapsed time immediately before sending initial black. After completion including final reset, compute the next intermediate color from elapsed time; do not use a fixed frame count, fixed frame rate, or an inter-frame delay. Explicitly submit initial black, full primary color at the first available opportunity at or after the 0.5-second boundary, and final black at or after the one-second boundary. The one-second boundary remains relative to the initial anchor, without restarting at the peak. Even if a slow send passes both boundaries, send full primary before final black unless interrupted by valid input. Slow sends may skip intermediate levels and extend completion beyond the nominal duration; no endpoint requires an overlapping send or a separate transmission implementation.
+
+Check incoming datagrams before the first flash frame and between subsequent frames, using the normal bounded batch policy. A valid color packet interrupts either flash and its selected color is sent next; a startup flash never restarts and can be superseded before it emits any frame. Invalid packets reset inactivity but do not replace the selected color or interrupt an in-progress flash. Do not abort an in-flight send to process traffic. An uninterrupted flash ends black without restoring the previous packet color. Handled shutdown between frames sends no additional frame, so an intermediate color may remain. The usual sender failure/cancellation contract applies to flash frames as well as packet frames. Neither flash changes `dld-send` or `dld-init` behavior.
+
+Keep `sent` as the count of successfully completed packet-derived frames. Report completed animation frames separately as `flash_frames`, completed green/red cycles as `startup_flashes`/`idle_flashes`, and valid-packet takeovers as `interrupted_flashes`. Count a completed flash only after its final black frame succeeds; signal cancellation is not a packet interruption.
+
+The shim provides no acknowledgment, packet sequence, duplicate suppression, automatic retransmission, TCP listener, or transform of incoming RGB values. Apart from these two status flashes, it has no general animation, gamma correction, dithering, or interpolation engine. With `--no-idle-flash`, normal packet silence preserves the last completed color. Local receive/send counters cannot account for packets dropped before reaching the socket. A 20 Hz source is a workload to test, not a guaranteed 50 ms receive-to-completion deadline. See [UDP operation](docs/udp.md) for setup and packet examples; a possible future reliable protocol remains separate (§14.4).
 
 ---
 
@@ -693,6 +701,8 @@ deharrak-leds-driver/
 │   ├── dld_udp.c
 │   ├── dld_opc.c
 │   ├── dld_opc.h
+│   ├── dld_flash.c
+│   ├── dld_flash.h
 │   ├── dld_spin.S
 │   ├── dld_common.c
 │   ├── dld_common.h
@@ -719,7 +729,7 @@ Recommended build stages:
 3. Compile the host code and included AM335x loader using the same versioned pixel-profile definitions as the firmware. The first implementation uses `src/dld_hw.c` as the equivalent loader path permitted in §9.2. Keep the profile name/identifier, wire order, and timing definitions consistent across all commands and the firmware.
 4. Build the C/ARM kernel module against `/usr/src/linux-headers-3.8.13-bone80`; inspect its linked grant/PMU-loop/observation path and exported API compatibility.
 5. Link `dld-init` with the firmware blob and shared host support.
-6. Link both `dld-send` and `dld-udp` with the same `dld_sender` object, shared support, and ioctl interface. The UDP program additionally links the OPC parser. No product command links the retained historical `src/dld_spin.S`; it is used only by diagnostic test/benchmark targets.
+6. Link both `dld-send` and `dld-udp` with the same `dld_sender` object, shared support, and ioctl interface. The UDP program additionally links the OPC parser and elapsed-time flash selector. No product command links the retained historical `src/dld_spin.S`; it is used only by diagnostic test/benchmark targets.
 
 Required build and implementation checks:
 
@@ -747,9 +757,9 @@ The current utility, including the legacy UDP shim, does not provide:
 
 - independent colors per string;
 - independent colors per pixel;
-- animation, dithering, interpolation, gamma correction, or brightness limiting;
+- general-purpose animation beyond the two UDP status flashes in §4.5, dithering, interpolation of incoming colors, gamma correction, or brightness limiting;
 - TCP reception or complete LEDscape/OPC feature emulation beyond §4.5;
-- packet sequencing, acknowledgments, automatic retransmission, or traffic-timeout blackout;
+- packet sequencing, acknowledgments, or automatic retransmission;
 - production boot-service installation or automatic driver recovery;
 - independent firmware identity/liveness verification on each send;
 - competing-process detection or automatic service management inside the CLI commands;
@@ -791,6 +801,16 @@ send/cancellation behavior. Test the shared sender with mocked OS boundaries
 for retained resources, per-frame locking, fresh initialized configuration,
 sequence wrap, rejection/cleanup, and existing CLI behavior. These software
 checks do not establish native 20 Hz output, network loss, or physical timing.
+
+Verify both status flashes are enabled by default and independently disabled
+by their flags. Check initial black, full primary, and final black; elapsed-time
+selection with fast and slow synchronous sends; strict inactivity expiry and
+recurrence; and activity from valid, malformed, and unsupported datagrams.
+Verify valid packets interrupt flashes only between sends, invalid packets
+reset inactivity without interrupting an active flash, and shutdown or sender
+failure follows the existing lifecycle contract. Keep packet-only regression
+tests with both flashes disabled. Software timing checks do not establish
+the flash's appearance or cadence on the installed panel.
 
 ### 13.2 Pin mapping and exact lengths
 

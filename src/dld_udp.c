@@ -1,6 +1,7 @@
 #define _POSIX_C_SOURCE 200809L
 #include "dld_sender.h"
 #include "dld_opc.h"
+#include "dld_flash.h"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -13,6 +14,7 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <time.h>
 #include <unistd.h>
 
 /* A finite batch prevents continuous ingress from starving transmission.
@@ -29,13 +31,47 @@ struct packet_counts {
     uint64_t unsupported;
     uint64_t coalesced;
     uint64_t sent;
+    uint64_t flash_frames;
+    uint64_t startup_flashes;
+    uint64_t idle_flashes;
+    uint64_t interrupted_flashes;
 };
 
 static void usage(FILE *stream)
 {
     fprintf(stream, "usage: dld-udp [--bind ADDRESS] [--port PORT]\n"
+            "               [--no-startup-flash] [--no-idle-flash]\n"
             "  ADDRESS: numeric IPv4 or IPv6 address (default ::, dual-stack)\n"
-            "  PORT: 1..65535 (default 7890); foreground OPC UDP receiver\n");
+            "  PORT: 1..65535 (default 7890); foreground OPC UDP receiver\n"
+            "  --no-startup-flash: suppress the initial green smooth flash\n"
+            "  --no-idle-flash: suppress red smooth flashes after 60s of inactivity\n");
+}
+
+static int monotonic_now(uint64_t *now, char *error, size_t cap)
+{
+    struct timespec stamp;
+    if (clock_gettime(CLOCK_MONOTONIC, &stamp) < 0) {
+        snprintf(error, cap, "read monotonic clock: %s", strerror(errno));
+        return -1;
+    }
+    *now = (uint64_t)stamp.tv_sec * UINT64_C(1000000000) +
+           (uint64_t)stamp.tv_nsec;
+    return 0;
+}
+
+/* Round up to milliseconds, including the extra ns for a strictly greater
+ * than 60s deadline. Cap all waits so a just-delivered signal cannot strand us.
+ */
+static int idle_wait_ms(uint64_t now, uint64_t activity, int enabled)
+{
+    uint64_t elapsed = now >= activity ? now - activity : 0;
+    uint64_t remaining;
+    if (!enabled) return DLD_UDP_IDLE_MS;
+    if (elapsed > DLD_FLASH_IDLE_NS) return 0;
+    remaining = DLD_FLASH_IDLE_NS - elapsed + 1;
+    if (remaining >= (uint64_t)DLD_UDP_IDLE_MS * UINT64_C(1000000))
+        return DLD_UDP_IDLE_MS;
+    return (int)((remaining + UINT64_C(999999)) / UINT64_C(1000000));
 }
 
 static int valid_port(const char *text)
@@ -102,7 +138,8 @@ socket_failed:
 }
 
 static int receive_batch(int fd, unsigned char *packet, uint32_t *rgb,
-                           struct packet_counts *counts, char *error, size_t cap)
+                           struct packet_counts *counts, uint64_t *activity,
+                           char *error, size_t cap)
 {
     unsigned i;
     int have_color = 0;
@@ -128,6 +165,8 @@ static int receive_batch(int fd, unsigned char *packet, uint32_t *rgb,
             return -1;
         }
         ++counts->received;
+        /* Activity means any consumed datagram, even if it is not usable OPC. */
+        if (monotonic_now(activity, error, cap) < 0) return -1;
         if (message.msg_flags & MSG_TRUNC) {
             ++counts->malformed;
             continue;
@@ -148,14 +187,20 @@ int main(int argc, char **argv)
     const char *address = "::", *port = "7890";
     struct dld_sender sender;
     struct packet_counts counts;
+    struct dld_flash flash;
+    uint64_t now, activity = 0;
     unsigned char packet[DLD_UDP_PACKET_CAP];
     char error[512] = "";
     int i, fd = -1, sender_opened = 0, code = DLD_OK;
+    int startup_enabled = 1, idle_enabled = 1;
+    enum { FLASH_NONE, FLASH_STARTUP, FLASH_IDLE } flashing = FLASH_NONE;
     memset(&counts, 0, sizeof(counts));
     for (i = 1; i < argc; ++i) {
         if (!strcmp(argv[i], "--help") && argc == 2) { usage(stdout); return DLD_OK; }
         if (!strcmp(argv[i], "--bind") && i + 1 < argc) address = argv[++i];
         else if (!strcmp(argv[i], "--port") && i + 1 < argc) port = argv[++i];
+        else if (!strcmp(argv[i], "--no-startup-flash")) startup_enabled = 0;
+        else if (!strcmp(argv[i], "--no-idle-flash")) idle_enabled = 0;
         else { usage(stderr); return DLD_BAD_ARGUMENT; }
     }
     if (!valid_port(port) || *address == '\0') { usage(stderr); return DLD_BAD_ARGUMENT; }
@@ -167,20 +212,76 @@ int main(int argc, char **argv)
     code = dld_sender_open(&sender, error, sizeof(error));
     if (code != DLD_OK) goto done;
     sender_opened = 1;
-    fprintf(stderr, "dld-udp: listening on [%s]:%s; OPC RGB, batch limit %u\n",
-            address, port, DLD_UDP_BATCH);
+    if (monotonic_now(&activity, error, sizeof(error)) < 0) {
+        code = DLD_PREREQUISITE; goto done;
+    }
+    if (startup_enabled) {
+        dld_flash_start(&flash, UINT32_C(0x00ff00), activity);
+        flashing = FLASH_STARTUP;
+    }
+    fprintf(stderr, "dld-udp: listening on [%s]:%s; OPC RGB, batch limit %u; "
+            "startup flash %s, idle flash %s\n", address, port, DLD_UDP_BATCH,
+            startup_enabled ? "on" : "off", idle_enabled ? "on" : "off");
     while (!dld_cancelled) {
         struct pollfd watched;
         struct dld_send_result result;
         uint32_t rgb = 0;
-        int ready, have_color;
+        int ready, have_color, final_frame = 0;
+        /* Check queued input before every animation frame. A finite batch
+         * allows sends to make progress even under continuous UDP traffic.
+         */
+        have_color = receive_batch(fd, packet, &rgb, &counts, &activity,
+                                   error, sizeof(error));
+        if (have_color < 0) { code = DLD_PREREQUISITE; break; }
+        if (dld_cancelled) break;
+        if (monotonic_now(&now, error, sizeof(error)) < 0) {
+            code = DLD_PREREQUISITE; break;
+        }
+        if (have_color) {
+            if (flashing != FLASH_NONE) ++counts.interrupted_flashes;
+            flashing = FLASH_NONE;
+        } else {
+            if (flashing == FLASH_NONE && idle_enabled &&
+                dld_flash_idle_due(now, activity)) {
+                dld_flash_start(&flash, UINT32_C(0xff0000), now);
+                flashing = FLASH_IDLE;
+            }
+            if (flashing != FLASH_NONE) {
+                /* Startup logging/input handling can delay the first frame.
+                 * Its animation clock starts here; the idle baseline remains
+                 * the successful attachment time recorded above.
+                 */
+                if (!flash.initial_sent) flash.started_ns = now;
+                final_frame = dld_flash_next(&flash, now, &rgb);
+            }
+        }
+        if (have_color || flashing != FLASH_NONE) {
+            code = dld_sender_send(&sender, rgb, &result, error, sizeof(error));
+            if (code != DLD_OK) break;
+            if (have_color) ++counts.sent;
+            else {
+                ++counts.flash_frames;
+                if (final_frame) {
+                    if (flashing == FLASH_STARTUP) ++counts.startup_flashes;
+                    else {
+                        ++counts.idle_flashes;
+                        /* Start the next interval after final black completes. */
+                        if (monotonic_now(&activity, error, sizeof(error)) < 0) {
+                            code = DLD_PREREQUISITE; break;
+                        }
+                    }
+                    flashing = FLASH_NONE;
+                }
+            }
+            continue;
+        }
         watched.fd = fd;
         watched.events = POLLIN;
         watched.revents = 0;
         /* A signal delivered between the condition and poll cannot leave the
          * daemon asleep indefinitely. No hardware polling occurs while idle.
          */
-        ready = poll(&watched, 1, DLD_UDP_IDLE_MS);
+        ready = poll(&watched, 1, idle_wait_ms(now, activity, idle_enabled));
         if (ready < 0) {
             if (errno == EINTR) continue;
             snprintf(error, sizeof(error), "poll UDP: %s", strerror(errno));
@@ -192,13 +293,6 @@ int main(int argc, char **argv)
                      (unsigned)watched.revents);
             code = DLD_PREREQUISITE; break;
         }
-        if (!(watched.revents & POLLIN)) continue;
-        have_color = receive_batch(fd, packet, &rgb, &counts, error, sizeof(error));
-        if (have_color < 0) { code = DLD_PREREQUISITE; break; }
-        if (!have_color || dld_cancelled) continue;
-        code = dld_sender_send(&sender, rgb, &result, error, sizeof(error));
-        if (code != DLD_OK) break;
-        ++counts.sent;
     }
 done:
     if (sender_opened) dld_sender_close(&sender);
@@ -206,8 +300,13 @@ done:
     if (code != DLD_OK) fprintf(stderr, "dld-udp: %s\n", error);
     fprintf(stderr, "dld-udp: stopped; received=%" PRIu64 " valid=%" PRIu64
             " malformed=%" PRIu64 " unsupported=%" PRIu64
-            " coalesced=%" PRIu64 " sent=%" PRIu64 " signal=%d exit=%d\n",
+            " coalesced=%" PRIu64 " sent=%" PRIu64
+            " flash_frames=%" PRIu64 " startup_flashes=%" PRIu64
+            " idle_flashes=%" PRIu64 " interrupted_flashes=%" PRIu64
+            " signal=%d exit=%d\n",
             counts.received, counts.valid, counts.malformed, counts.unsupported,
-            counts.coalesced, counts.sent, (int)dld_cancelled, code);
+            counts.coalesced, counts.sent, counts.flash_frames,
+            counts.startup_flashes, counts.idle_flashes, counts.interrupted_flashes,
+            (int)dld_cancelled, code);
     return code;
 }

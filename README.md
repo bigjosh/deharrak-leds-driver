@@ -17,7 +17,8 @@ build/dld-udp
 
 The UDP shim uses the first RGB pixel of each accepted packet as the uniform
 color for the entire panel. It runs in the foreground after initialization;
-production boot-service installation remains separate integration work.
+by default it flashes green at startup and red after a minute without UDP
+traffic. Production boot-service installation remains separate integration work.
 
 ## How it works
 
@@ -205,11 +206,25 @@ the local panel profile still determines wire order. Other pixels are ignored.
 Queued updates are coalesced in bounded batches so a burst favors the latest
 valid color; malformed packets are discarded. A repeated color is sent again.
 
+Two status animations are enabled by default: one green flash at startup, and
+a red flash after more than 60 seconds since the last received UDP datagram or
+previous red flash. Each ramps from black to full color over 0.5 seconds, then
+back to black over 0.5 seconds. Frames follow the sender's actual completion
+speed; valid incoming color packets take over between frames. All received
+datagrams reset the inactivity timer, including malformed or unsupported ones.
+Suppress either behavior independently:
+
+```sh
+build/dld-udp --no-startup-flash --no-idle-flash
+```
+
+With `--no-idle-flash`, packet silence leaves the last displayed color alone.
+An uninterrupted status flash ends black; it does not restore the prior color.
 The shim exits on a sender error, without retrying or reinitializing. It sends
-no acknowledgment, does not black out on packet silence, and preserves no
-application-side frame queue. Stop it with Ctrl+C or `SIGTERM` before unloading
+no acknowledgment and preserves no application-side frame queue.
+Stop it with Ctrl+C or `SIGTERM` before unloading
 the helper or returning control to LEDscape. See the [UDP operating guide](docs/udp.md)
-for the packet format, lifecycle, counters, and recovery behavior.
+for the packet format, flash timing, lifecycle, counters, and recovery behavior.
 
 A 300-pixel bank uses a nominal 9.24 ms protected window, plus setup and
 restoration overhead. Whole-command latency includes all active banks,

@@ -45,19 +45,30 @@ def available_port():
 
 class Receiver(object):
     def __init__(self, owner, bind="127.0.0.1", delay=0, fail_after=0,
-                 port=None, ready=True, arguments=None):
+                 port=None, ready=True, arguments=None, startup=False, idle=False,
+                 fake_clock=False):
         self.owner = owner
         self.port = available_port() if port is None else port
         self.path = os.path.join(owner.directory, "sender-{0}.log".format(len(owner.receivers)))
         self.error_path = self.path + ".stderr"
         self.output_path = self.path + ".stdout"
+        self.clock_path = self.path + ".clock"
         self.stderr = open(self.error_path, "wb")
         self.stdout = open(self.output_path, "wb")
         environment = os.environ.copy()
         environment.update({"DLD_TEST_LOG": self.path,
                             "DLD_TEST_DELAY_MS": str(delay),
                             "DLD_TEST_FAIL_AFTER": str(fail_after)})
+        # Do not inherit test clock settings from the invoking shell.
+        environment.pop("DLD_TEST_CLOCK", None)
+        if fake_clock:
+            self.set_clock(0)
+            environment["DLD_TEST_CLOCK"] = self.clock_path
         command = [BINARY, "--port", str(self.port)]
+        if not startup:
+            command.append("--no-startup-flash")
+        if not idle:
+            command.append("--no-idle-flash")
         if bind is not None:
             command.extend(["--bind", bind])
         if arguments is not None:
@@ -78,6 +89,13 @@ class Receiver(object):
                 return source.read()
         except IOError:
             return ""
+
+    def set_clock(self, offset_ms):
+        # POSIX rename replaces atomically, including while the receiver reads.
+        temporary = self.clock_path + ".new"
+        with open(temporary, "w") as destination:
+            destination.write(str(offset_ms) + "\n")
+        os.rename(temporary, self.clock_path)
 
     def errors(self):
         return self.read(self.error_path)
@@ -279,7 +297,166 @@ class UdpTests(unittest.TestCase):
         self.assertTrue(wait_until(lambda: receiver.process.poll() is not None))
         self.assertEqual(receiver.process.returncode, 0)
         self.assertIn("usage: dld-udp", receiver.read(receiver.output_path))
+        self.assertIn("--no-startup-flash", receiver.read(receiver.output_path))
+        self.assertIn("--no-idle-flash", receiver.read(receiver.output_path))
         self.assertEqual(receiver.lines(), [])
+
+    def flash_complete(self, receiver, color, count=1):
+        colors = receiver.colors()
+        return colors.count(color) >= count and len(colors) >= 3 and colors[-1] == 0
+
+    def assert_smooth_flash(self, colors, color):
+        self.assertEqual(colors[0], 0)
+        self.assertEqual(colors[-1], 0)
+        self.assertGreaterEqual(len(colors), 5)
+        self.assertLess(len(colors), 30)  # 80 ms blocking sends gate the frame rate.
+        self.assertIn(color, colors)
+        peak = colors.index(color)
+        self.assertEqual(colors[:peak], sorted(colors[:peak]))
+        self.assertEqual(colors[peak:], sorted(colors[peak:], reverse=True))
+        self.assertTrue(all((rgb & ~color) == 0 for rgb in colors))
+
+    def test_default_startup_green_and_idle_red(self):
+        receiver = Receiver(self, startup=True, idle=True, delay=80, fake_clock=True)
+        self.assertTrue(wait_until(lambda: self.flash_complete(receiver, 0x00ff00)))
+        green = receiver.colors()
+        self.assert_smooth_flash(green, 0x00ff00)
+        receiver.set_clock(61000)
+        self.assertTrue(wait_until(lambda: self.flash_complete(receiver, 0xff0000)))
+        self.assert_smooth_flash(receiver.colors()[len(green):], 0xff0000)
+        self.assertEqual(receiver.stop(), 0)
+        self.assertIn("sent=0 flash_frames={0}".format(len(receiver.colors())), receiver.errors())
+        self.assertIn("startup_flashes=1 idle_flashes=1 interrupted_flashes=0", receiver.errors())
+        self.assertEqual(receiver.lines().count("OPEN"), 1)
+        # Every selected frame completes before the next frame is submitted.
+        events = receiver.lines()[1:-1]
+        self.assertEqual(len(events), 2 * len(receiver.colors()))
+        for index in range(0, len(events), 2):
+            self.assertEqual(events[index].replace("SEND", "DONE"), events[index + 1])
+
+    def test_independent_opt_out_flags(self):
+        startup = Receiver(self, startup=True, idle=False, delay=80, fake_clock=True)
+        self.assertTrue(wait_until(lambda: self.flash_complete(startup, 0x00ff00)))
+        green = startup.colors()
+        startup.set_clock(600000)
+        time.sleep(0.35)
+        self.assertEqual(startup.colors(), green)
+        self.assertEqual(startup.stop(), 0)
+        self.assertIn("startup_flashes=1 idle_flashes=0", startup.errors())
+        idle = Receiver(self, startup=False, idle=True, delay=80, fake_clock=True)
+        self.assertEqual(idle.colors("SEND"), [])
+        idle.set_clock(61000)
+        self.assertTrue(wait_until(lambda: self.flash_complete(idle, 0xff0000)))
+        self.assertEqual(idle.stop(), 0)
+        self.assertIn("startup_flashes=0 idle_flashes=1", idle.errors())
+        neither = Receiver(self, fake_clock=True)
+        neither.set_clock(600000)
+        time.sleep(0.35)
+        self.assertEqual(neither.stop(), 0)
+        self.assertEqual(neither.lines(), ["OPEN", "CLOSE"])
+
+    def test_clock_jump_during_send_preserves_flash_endpoints(self):
+        receiver = Receiver(self, startup=True, delay=200, fake_clock=True)
+        self.assertTrue(wait_until(lambda: receiver.colors("SEND") == [0]))
+        receiver.set_clock(2000)
+        self.assertTrue(wait_until(lambda: receiver.colors() == [0, 0x00ff00, 0]))
+        self.assertEqual(receiver.stop(), 0)
+        self.assertIn("flash_frames=3 startup_flashes=1", receiver.errors())
+
+    def test_udp_color_interrupts_each_flash_without_appended_black(self):
+        for startup in [True, False]:
+            receiver = Receiver(self, startup=startup, idle=True,
+                                delay=80, fake_clock=True)
+            if not startup:
+                receiver.set_clock(61000)
+            self.assertTrue(wait_until(lambda: len(receiver.colors("SEND")) >= 2))
+            receiver.send(opc(0x123456))
+            self.assertTrue(wait_until(lambda: receiver.colors()[-1:] == [0x123456]))
+            colors = receiver.colors()
+            time.sleep(0.35)
+            self.assertEqual(receiver.colors(), colors)
+            self.assertEqual(receiver.stop(), 0)
+            self.assertIn("valid=1", receiver.errors())
+            self.assertIn("sent=1", receiver.errors())
+            self.assertIn("startup_flashes=0 idle_flashes=0 interrupted_flashes=1", receiver.errors())
+
+    def test_invalid_input_during_flash_does_not_interrupt(self):
+        receiver = Receiver(self, startup=True, delay=80)
+        self.assertTrue(wait_until(lambda: len(receiver.colors("SEND")) >= 2))
+        receiver.send(b"bad")
+        receiver.send(opc(0, command=1))
+        self.assertTrue(wait_until(lambda: self.flash_complete(receiver, 0x00ff00)))
+        self.assertEqual(receiver.stop(), 0)
+        self.assertIn("received=2 valid=0 malformed=1 unsupported=1", receiver.errors())
+        self.assertIn("startup_flashes=1 idle_flashes=0 interrupted_flashes=0", receiver.errors())
+
+    def test_every_received_datagram_restarts_idle_interval(self):
+        for packet in [b"bad", opc(0, command=1), opc(0x123456)]:
+            receiver = Receiver(self, idle=True, delay=80, fake_clock=True)
+            receiver.set_clock(59000)
+            receiver.send(packet)
+            time.sleep(0.35)  # Allow the real nonblocking socket to consume it.
+            before = receiver.colors()
+            receiver.set_clock(61000)
+            time.sleep(0.35)
+            self.assertEqual(receiver.colors("SEND"), before)
+            receiver.set_clock(120000)
+            self.assertTrue(wait_until(lambda: self.flash_complete(receiver, 0xff0000)))
+            self.assertEqual(receiver.stop(), 0)
+            self.assertIn("received=1", receiver.errors())
+            self.assertIn("idle_flashes=1", receiver.errors())
+
+    def test_red_interval_restarts_after_completed_final_black(self):
+        receiver = Receiver(self, idle=True, delay=80, fake_clock=True)
+        receiver.set_clock(61000)
+        self.assertTrue(wait_until(lambda: self.flash_complete(receiver, 0xff0000)))
+        first = receiver.colors()
+        time.sleep(0.35)
+        self.assertEqual(receiver.colors("SEND"), first)  # No overdue catch-up loop.
+        receiver.set_clock(120000)
+        time.sleep(0.35)
+        self.assertEqual(receiver.colors("SEND"), first)
+        receiver.set_clock(123000)
+        self.assertTrue(wait_until(lambda: self.flash_complete(receiver, 0xff0000, count=2)))
+        self.assertEqual(receiver.stop(), 0)
+        self.assertIn("startup_flashes=0 idle_flashes=2 interrupted_flashes=0", receiver.errors())
+
+    def test_queued_udp_takes_priority_over_overdue_idle_flash(self):
+        receiver = Receiver(self, idle=True, delay=80, fake_clock=True)
+        receiver.process.send_signal(signal.SIGSTOP)
+        time.sleep(0.04)
+        receiver.set_clock(61000)
+        receiver.send(opc(0x123456))
+        receiver.process.send_signal(signal.SIGCONT)
+        self.assertTrue(wait_until(lambda: receiver.colors() == [0x123456]))
+        time.sleep(0.35)
+        self.assertEqual(receiver.stop(), 0)
+        self.assertEqual(receiver.colors(), [0x123456])
+        self.assertIn("flash_frames=0 startup_flashes=0 idle_flashes=0", receiver.errors())
+
+    def test_status_send_failure_stops_without_recovery_flash(self):
+        receiver = Receiver(self, startup=True, delay=80, fail_after=2)
+        self.assertTrue(wait_until(lambda: receiver.process.poll() is not None))
+        self.assertEqual(receiver.process.returncode, 5)
+        self.assertEqual(len(receiver.colors("SEND")), 2)
+        self.assertEqual(receiver.colors(), [0])
+        self.assertIn("flash_frames=1 startup_flashes=0", receiver.errors())
+        self.assertEqual(receiver.lines()[-2:], ["FAIL", "CLOSE"])
+
+    def test_signal_during_status_send_preserves_critical_failure(self):
+        receiver = Receiver(self, startup=True, delay=200)
+        self.assertTrue(wait_until(lambda: receiver.colors("SEND") == [0]))
+        self.assertEqual(receiver.stop(), 5)
+        self.assertEqual(receiver.lines(), ["OPEN", "SEND 000000", "FAIL", "CLOSE"])
+        self.assertIn("flash_frames=0 startup_flashes=0", receiver.errors())
+
+    def test_clock_failure_closes_sender_and_exits(self):
+        receiver = Receiver(self, idle=True, fake_clock=True)
+        os.unlink(receiver.clock_path)
+        self.assertTrue(wait_until(lambda: receiver.process.poll() is not None))
+        self.assertEqual(receiver.process.returncode, 3)
+        self.assertEqual(receiver.lines(), ["OPEN", "CLOSE"])
+        self.assertIn("read monotonic clock", receiver.errors())
 
 
 if __name__ == "__main__":

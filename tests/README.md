@@ -51,6 +51,12 @@ IPv4 datagram payload, first-pixel selection, and ignored trailing messages.
 Rejected packets must leave the caller's selected color untouched. It opens
 no sockets or devices.
 
+`test_flash.c` tests the pure elapsed-time frame selector and inactivity
+predicate with supplied timestamps. It checks both ramps, channel rounding,
+initial/peak/final endpoints, sends that skip one or both deadlines, clock
+limits, restart state, and strict expiry after 60 seconds. It opens no clocks,
+sockets, files, or hardware devices.
+
 `test_udp.py` runs the real receiver/socket loop linked with
 `tests/fake_udp_sender.c` instead of the hardware sender. It uses temporary files
 and local loopback UDP sockets, with no device access or BBG connection.
@@ -62,11 +68,23 @@ POSIX signals including `SIGSTOP`/`SIGCONT`, so run it on Linux; it supports
 the board's Python 3.2 and needs no extra Python packages. Its simulated 20 Hz
 cases test the receiver and queue policy, not actual hardware throughput or Ethernet loss.
 
-These checks are included in `make test-native`. To rerun just the packet and
-socket tests after building their targets:
+The packet-only cases disable both status flashes to preserve their original
+input-to-send assertions. Status-flash checks separately cover default and
+independently disabled behavior, black/full-color/black endpoints, elapsed-time
+brightness with slow sends, inactivity recurrence, and activity from rejected
+packets. They also exercise valid-packet takeover between flash frames and
+the existing signal/fatal-error rules. The test executable alone wraps
+`clock_gettime`; an offset file lets the harness advance inactivity time
+without waiting a real minute, and simulate clock-read failure. The product
+has no clock override or configurable flash duration. Simulated send duration
+and time do not establish the animation's appearance on the installed panel.
+
+These checks are included in `make test-native`. To rerun just the packet,
+flash, and socket tests after building their targets:
 
 ```sh
 build/test-opc
+build/test-flash
 python3 tests/test_udp.py build/test-udp
 ```
 
@@ -153,7 +171,11 @@ separately authorized UDP qualification run, initialize once, start only the
 receiver, and drive the actual network input. Correlate controller timestamps,
 local received/coalesced/completed counts, and physical captures at 20 Hz,
 under burst traffic, and with the agreed background loads. Include both zero
-and one bits. Record packet loss and capture gaps; the shim has no remote
+and one bits. Use `--no-startup-flash --no-idle-flash` for packet-only waveform
+measurements. Separately check the default green startup and red inactivity
+flashes on the panel, including intermediate levels, full-color endpoints,
+black completion, and takeover when normal traffic resumes. Record packet
+loss and capture gaps; the shim has no remote
 acknowledgment, and local counters cannot count frames dropped before socket
 reception. Do not equate the prior CLI endurance results or fake-sender
 loopback tests with completed UDP hardware qualification.

@@ -250,6 +250,10 @@ Stop it with Ctrl+C or `SIGTERM` before unloading
 the helper or returning control to LEDscape. See the [UDP operating guide](docs/udp.md)
 for the packet format, flash timing, lifecycle, counters, and recovery behavior.
 
+For a repeating local test gallery, see [Exercise panels over UDP](docs/exercise.md).
+It sends fades, flashes, and color changes at up to 10 Hz while keeping the sum
+of the three RGB channels at or below 255.
+
 A 300-pixel bank uses a nominal 9.24 ms protected window, plus setup and
 restoration overhead. Whole-command latency includes all active banks,
 settling, admission waits, and Linux scheduling between banks. Ethernet

@@ -4,6 +4,22 @@ The tests separate software behavior from physical waveform qualification. A
 passing software test does not qualify the installed LED type, wire color order,
 propagation allowance, or signal measured after the level shifter.
 
+## Local scene generator
+
+The optional [panel exercise program](../docs/exercise.md) runs on the local
+Windows or Linux computer with Python 3.8+. Its focused checks are:
+
+```sh
+python tests/test_exercise_scenes.py
+python tests/test_exercise_panels.py
+```
+
+The scene suite samples every 10 Hz frame across multiple playlist passes and
+panel arrangements, including the strict RGB sum limit. The runner suite checks
+the final OPC packet guard, per-panel pacing without catch-up, socket errors,
+graceful stopping and final black. Two subprocess tests send real UDP only to
+localhost. These tests do not contact the panels or change driver state.
+
 ## Tests without GPIO or PRU access
 
 Run from the project directory on the native build board:

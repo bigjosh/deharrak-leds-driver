@@ -13,7 +13,7 @@ Push-Location $dldRoot
 try {
     # Exclude generated files even when packaging an already-built checkout.
     $dldExcludes = @('--exclude=__pycache__', '--exclude=*.pyc',
-        '--exclude=kernel/*.o', '--exclude=kernel/*.ko', '--exclude=kernel/*.mod.c',
+        '--exclude=kernel/*.o', '--exclude=kernel/*.ko', '--exclude=kernel/*.dis', '--exclude=kernel/*.mod.c',
         '--exclude=kernel/.*.cmd', '--exclude=kernel/.*.d', '--exclude=kernel/.tmp_versions',
         '--exclude=kernel/Module.symvers', '--exclude=kernel/modules.order')
     & tar @dldExcludes -cf $dldArchive Makefile README.md spec.md todo.md .gitignore .gitattributes requirements-bench.txt include src pru kernel vendor config tools tests docs

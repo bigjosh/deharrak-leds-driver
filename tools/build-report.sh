@@ -9,16 +9,18 @@ ld --version | head -n 1
 getconf GNU_LIBC_VERSION
 dpkg --print-architecture
 printf '\nArtifact sizes\n'
-wc -c build/pru.bin build/dld-init build/dld-send kernel/dld_quiet.ko
-size build/dld-init build/dld-send
+wc -c build/pru.bin build/dld-init build/dld-send build/dld-udp kernel/dld_quiet.ko
+size build/dld-init build/dld-send build/dld-udp
 printf '\nARM binary attributes\n'
 readelf -A build/dld-init
 readelf -A build/dld-send
+readelf -A build/dld-udp
 printf '\nRuntime dependencies\n'
 ldd build/dld-init
 ldd build/dld-send
+ldd build/dld-udp
 printf '\nArtifact hashes\n'
-sha256sum build/pasm build/pru.bin build/dld-init build/dld-send kernel/dld_quiet.ko
+sha256sum build/pasm build/pru.bin build/dld-init build/dld-send build/dld-udp kernel/dld_quiet.ko
 modinfo kernel/dld_quiet.ko
 printf '\nSource hashes\n'
 sha256sum Makefile .gitignore config/panel.example.json

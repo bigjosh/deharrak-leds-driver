@@ -8,7 +8,7 @@ All pixels on a single panel are the same type. A panel's BeagleBone therefore d
 
 The installed panels run a version of LEDscape and show occasional display glitches. This project replaces that renderer with a smaller driver focused on the required uniform-color updates.
 
-To this end, we will implement a small, standalone driver with two command-line commands that drive up to six deployed LED strings from the BeagleBone Green using one PRU and the AM335x GPIO `SETDATAOUT` / `CLEARDATAOUT` registers. `dld-init CONFIG_FILE` loads the panel's pixel profile and six string lengths and performs one-time hardware and firmware initialization; subsequent `dld-send color` invocations send a color using that configuration and return only after the final reset period has elapsed.
+The driver drives up to six deployed LED strings from the BeagleBone Green using one PRU and the AM335x GPIO `SETDATAOUT` / `CLEARDATAOUT` registers. `dld-init CONFIG_FILE` loads the panel's pixel profile and six string lengths and performs one-time hardware and firmware initialization; subsequent `dld-send color` invocations send a color using that configuration and return only after the final reset period has elapsed. The resident `dld-udp` shim receives the existing LEDscape OPC-over-UDP packets and uses the first RGB pixel as the uniform panel color. Both sending programs link the same internal C sender; the shim does not add a separate firmware or transmission implementation.
 
 The existing hardware is fixed. The six data signals are connected to:
 
@@ -65,7 +65,7 @@ Runtime assumptions:
 
 1. The commands run with effective UID zero; the kernel ioctl also requires `CAP_SYS_RAWIO`.
 2. `uio_pruss` is available and loaded.
-3. No LEDscape, OPC, or other PRU-control process uses the hardware during the initialized session, including idle time between sends. The test script or production boot setup establishes this prerequisite; the CLI commands do not discover competing services or manage them.
+3. No LEDscape, independent OPC renderer, or other noncooperating PRU-control process uses the hardware during the initialized session, including idle time between sends. The test script or production boot setup establishes this prerequisite; DLD does not discover competing services or manage them. The DLD UDP receiver is a cooperating sender under the shared lock.
 4. The current device tree already pinmuxes the six header pins as GPIOs.
 5. The six signals are electrically compatible with the existing deployed level-shifting and LED hardware.
 6. PRU0 is used for output. PRU1 remains disabled from initialization through all subsequent sends, including idle time between commands.
@@ -73,7 +73,7 @@ Runtime assumptions:
 8. The matching `dld_quiet.ko` module is loaded and `/dev/dld-quiet` is available. Only CPU0 is online, its minimum/maximum/current frequency is fixed at 1 GHz, and the helper can reserve an exclusive, pinned hardware cycle counter.
 9. The reference appliance uses the matching kernel's `CONFIG_MUSB_PIO_ONLY=y`; USB host/gadget configuration is left intact. There is no swap, and no active unaccounted autonomous DMA client. Recorded bench preparation sets the CPU policy and disables the four user-LED triggers reversibly; runtime binaries and logs use `tmpfs`. See [quiet-window operation](docs/quiet-window.md) for checks and limits.
 
-Both commands shall use the same exclusive lock and fail rather than run concurrently with another instance of either command. This lock coordinates cooperating `dld` commands only; it does not exclude LEDscape or other software that ignores it.
+Initialization and both senders shall use the same exclusive lock and fail rather than overlap another cooperating initialization or send. The resident receiver takes and releases this lock per frame, retaining only its file descriptor between frames. This lock coordinates cooperating `dld` commands only; it does not exclude LEDscape or other software that ignores it.
 
 ---
 
@@ -84,6 +84,7 @@ Both commands shall use the same exclusive lock and fail rather than run concurr
 ```text
 dld-init CONFIG_FILE
 dld-send color
+dld-udp [--bind ADDRESS] [--port PORT]
 ```
 
 Example:
@@ -100,11 +101,11 @@ With the example configuration below, this initializes all six data pins as outp
 
 `dld-send` shall accept only a color, use the profile and lengths established by the most recent successful `dld-init`, and wait until every configured pixel has had sufficient time to latch that frame's color. The final wait includes the selected profile's reset duration, a conservative allowance for propagation through the configured strings, and a safety margin as specified in §6. A normal send shall not reread the configuration file, change the profile or lengths, reconfigure GPIO directions, reload or restart the PRU, or repeat one-time hardware initialization. Critical failure uses the separate cleanup path in §9.6.
 
-The configuration and running PRU firmware shall survive the exit of both commands. No resident host daemon is required. Initialization remains valid until reinitialization takes control of the hardware, a reboot, PRUSS reset or loss of its configuration, or an execution failure that invalidates the initialized state. Once reinitialization takes control, a failed `dld-init` leaves the driver uninitialized. Successful initialization is an operator prerequisite. `dld-send` retains basic command-block and readiness checks (§8.3), but does not independently prove that initialization occurred or the firmware is still running. It shall not initialize implicitly.
+The configuration and running PRU firmware shall survive the exit of the commands. The local CLI path requires no resident host daemon; UDP reception uses the optional resident `dld-udp` process. Initialization remains valid until reinitialization takes control of the hardware, a reboot, PRUSS reset or loss of its configuration, or an execution failure that invalidates the initialized state. Once reinitialization takes control, a failed `dld-init` leaves the driver uninitialized. Successful initialization is an operator prerequisite. Both senders retain basic command-block and readiness checks (§8.3), but do not independently prove that initialization occurred or the firmware is still running. Neither shall initialize implicitly.
 
 A previous request still in progress is temporarily not ready for another send; it does not by itself invalidate initialization. A new `dld-send` shall fail before publication without disturbing that request. Once the PRU finishes and the existing validity/readiness checks pass, a later invocation may send normally, even if the previous host process died before observing completion.
 
-Run `dld-init` again to apply changes to the configuration file or recover from an invalidated state. Reinitialization shall acquire the same lock, clear all six outputs low, and replace the previous configuration. Editing the file alone does not affect a running session. Each command requires exactly one argument.
+Run `dld-init` again to apply changes to the configuration file or recover from an invalidated state. Reinitialization shall acquire the same lock, clear all six outputs low, and replace the previous configuration. Editing the file alone does not affect a running session. Each one-shot command requires exactly one argument; the UDP receiver's options are defined in §4.5. Stop the receiver before operator-driven reinitialization and restart it after success.
 
 ### 4.2 `color` (`dld-send`)
 
@@ -208,13 +209,37 @@ Exit codes:
 
 | Code | Meaning |
 |---:|---|
-| 0 | Success |
+| 0 | Success, including normal idle UDP receiver termination |
 | 2 | Invalid command-line syntax, color, or configuration content |
-| 3 | Missing privilege or runtime prerequisite, or unreadable configuration file |
+| 3 | Missing privilege/runtime prerequisite, unreadable configuration, or UDP socket error |
 | 4 | PRU initialization, loading, or readiness failure |
 | 5 | Critical send-completion failure or PRU-reported error |
 | 6 | Shared command lock is held or an outstanding PRU request prevents a new command |
 | 7 | Initialized command block is missing, incompatible, or invalid; run `dld-init` |
+
+### 4.5 LEDscape UDP shim (`dld-udp`)
+
+The receiver shall run in the foreground after successful initialization. It shall accept optional `--bind ADDRESS` and `--port PORT`, plus `--help`. Addresses are numeric IPv4 or IPv6 literals; ports are decimal integers 1 through 65535. Defaults are `::` and port 7890, explicitly permitting IPv4 reception on the IPv6 socket. An explicit IPv4 wildcard supports IPv4 unicast and broadcast through the existing network configuration. Binding is exclusive, without socket reuse. The receiver shall not change network or service configuration.
+
+Interpret each UDP datagram as the first OPC message below:
+
+| Offset | Field | Rule |
+|---:|---|---|
+| 0 | Channel | Accept any value; ignore it |
+| 1 | Command | Accept zero (set pixel colors) only |
+| 2–3 | Payload length | Unsigned big-endian byte count, at least 3 |
+| 4–6 | First pixel | Logical red, green, blue bytes |
+| 7 onward | Remaining data | Require the complete declared payload; ignore later pixels |
+
+Reject short headers, unsupported commands, payloads shorter than one RGB pixel, and truncated declared payloads without invoking the sender. Ignore bytes after the first complete declared message, including any subsequent OPC messages; do not require the payload length to be a multiple of three. Wire order comes exclusively from the initialized local profile. No pixel type, string lengths, waveform parameters, or independent output colors can be changed through the packet.
+
+After receiving a datagram, drain a bounded batch of up to 64 datagrams total without blocking and send the newest valid color in that batch. Invalid input does not overwrite an already selected valid color. A batch containing no valid packet submits no frame. Keep only one selected color, with no separate application frame queue. A larger socket backlog can take several batches; this is not an unbounded drain to the globally newest datagram. Repeated identical colors shall be sent again. With no packet sequence field, selection follows receive order across all senders; stale or reordered network traffic cannot be identified.
+
+Wait for full completion of the selected frame before receiving the next batch. There is no per-packet configuration-file read, fork, device reopen, or PRU remap. The shared sender shall retain its PRU mapping, kernel device descriptor, and lock descriptor for the process lifetime, acquire/release the shared lock per frame, and validate the current mailbox/profile/lengths on every send. A successful intervening coordinated initialization therefore cannot leave a cached profile in use. Keep the kernel/firmware ABI and protected timing unchanged.
+
+The receiver shall discard malformed or unsupported packets and continue; any sender failure, including busy or invalid session, terminates it with the existing send exit code and no automatic initialization or frame retry. Socket/runtime failures use exit 3 and invalid options use exit 2. Normal startup and exit diagnostics, including local counters, go to stderr; do not log every successful frame or write normal output to stdout. Idle `SIGINT`, `SIGTERM`, or `SIGHUP` stops normally with exit 0 and sends no blackout frame. Once a send starts, its existing cancellation/critical failure contract applies (§9.6).
+
+The shim provides no acknowledgment, packet sequence, duplicate suppression, automatic retransmission, TCP listener, traffic-timeout blackout, demo, gamma correction, dithering, or interpolation. It preserves the last latched color in normal idle operation. Local receive/send counters cannot account for packets dropped before reaching the socket. A 20 Hz source is a workload to test, not a guaranteed 50 ms receive-to-completion deadline. See [UDP operation](docs/udp.md) for setup and packet examples; a possible future reliable protocol remains separate (§14.4).
 
 ---
 
@@ -492,7 +517,7 @@ Statuses are `INITIALIZING=0`, `READY=1`, `RUNNING=2`, `DONE=3`, `WAIT_BANK=4`, 
 
 These are compatibility/readiness checks, not independent firmware identity/liveness verification. Do not add image hashes, heartbeat/probe requests, or ordinary-send PRU run-state checks. A stopped PRU with a valid ready mailbox permits publication but cannot reach the next gate or completion; that bounded wait fails critically. A retained busy mailbox is rejected before publication even if its PRU is stopped. Missing/incompatible/invalid state gives exit 7; an intact busy state gives exit 6. Kernel clock checks protect MMIO access and are separate from firmware-liveness checks.
 
-Initialization owns profile and lengths. The kernel, acting for `dld-send`, owns `wire_color`, `request_seq`, and `bank_grant`; the PRU owns `accepted_seq`, `bank_ready`, `bank_done`, `completion_seq`, status, and error after initialization. Clear the old grant and publish color before the new request sequence, with ARM device-memory ordering and a completed publication barrier. A new request cannot reuse stale grant/done state. Grant only after observing matching `accepted_seq`, `WAIT_BANK`, and `bank_ready` and establishing that bank's quiet window.
+Initialization owns profile and lengths. The kernel, acting for the shared sender used by `dld-send` and `dld-udp`, owns `wire_color`, `request_seq`, and `bank_grant`; the PRU owns `accepted_seq`, `bank_ready`, `bank_done`, `completion_seq`, status, and error after initialization. Clear the old grant and publish color before the new request sequence, with ARM device-memory ordering and a completed publication barrier. A new request cannot reuse stale grant/done state. Grant only after observing matching `accepted_seq`, `WAIT_BANK`, and `bank_ready` and establishing that bank's quiet window.
 
 The catalog and handshake semantics must agree across loader, firmware, host, and module. Changing a profile identifier's meaning or mailbox semantics requires an ABI change. Do not mix old ABI3 firmware/userspace senders with ABI4; there is no userspace-only fallback.
 
@@ -523,14 +548,15 @@ Runtime requires `uio_pruss` and matching `dld_quiet.ko`. Build the latter again
 
 ### 9.2 Deployment artifacts
 
-Embed assembled PRU firmware into `dld-init`. Deploy matching `kernel/dld_quiet.ko` alongside these two commands:
+Embed assembled PRU firmware into `dld-init`. Deploy matching `kernel/dld_quiet.ko` alongside these commands:
 
 ```text
 dld-init
 dld-send
+dld-udp
 ```
 
-`dld-init` shall load the embedded PRU code with `prussdrv_exec_code()` or an equivalent included loader path. Use one static firmware image containing the supported profile definitions; no panel-specific firmware generation is required. `dld-send` shall attach to the initialized driver without loading firmware. The profile identifier, six lengths, and request/completion state shall reside in PRU0 local data RAM and need not survive a reboot. The local JSON panel configuration is a separate deployment file, read only by `dld-init`.
+`dld-init` shall load the embedded PRU code with `prussdrv_exec_code()` or an equivalent included loader path. Use one static firmware image containing the supported profile definitions; no panel-specific firmware generation is required. Both senders shall attach to the initialized driver without loading firmware. The profile identifier, six lengths, and request/completion state shall reside in PRU0 local data RAM and need not survive a reboot. The local JSON panel configuration is a separate deployment file, read only by `dld-init`.
 
 ### 9.3 `dld-init` sequence
 
@@ -548,20 +574,20 @@ The initialization command shall:
 10. Observe the command block for readiness with an absolute 100 ms monotonic-clock deadline. The implemented clock starts immediately before the load/start operation, conservatively including its code-copy cost. Bounded polling with sleeps is permitted during initialization because no pixel data is being transmitted; interrupted waits shall not restart the deadline.
 11. Verify ordered `READY` with no firmware error and all sequence/gate fields zero. Report `ERROR` or expiry of the readiness deadline as an initialization failure.
 12. Print the initialization success line or a precise error.
-13. On success, release process-local resources and the lock while leaving PRU0 running, PRU1 disabled, all six outputs low, and the initialized hardware and configuration available to `dld-send`.
+13. On success, release process-local resources and the lock while leaving PRU0 running, PRU1 disabled, all six outputs low, and the initialized hardware and configuration available to both senders.
 
-### 9.4 `dld-send` sequence
+### 9.4 Shared send sequence
 
-1. Parse the single color argument; reject invalid input before taking hardware ownership.
-2. Acquire the shared nonblocking lock and require effective UID zero.
-3. Attach to the existing PRUSS UIO mapping without reset, reload, GPIO setup, or notification changes. Apply the ABI4 compatibility/readiness guard in §8.3.
-4. Open `/dev/dld-quiet`. Submit the zero-initialized, fixed-width, pointer-free 192-byte `dld_quiet_send` ioctl structure from `include/dld_quiet.h`, using ioctl API version 1 independently of mailbox ABI4. Inputs contain RGB, retained profile/lengths, and expected previous sequence. Do not accept caller-selected MMIO addresses, masks, or loop counts.
+1. The one-shot CLI parses its single color argument before hardware access. The UDP receiver validates its options before opening and validates each network packet before sending.
+2. Open the process-local shared sender once: acquire the shared nonblocking lock and require effective UID zero.
+3. Attach to the existing PRUSS UIO mapping without reset, reload, GPIO setup, or notification changes. Apply the ABI4 compatibility/readiness guard in §8.3, open `/dev/dld-quiet`, then release the lock while retaining its descriptor and the device mapping. Failed attachment releases only acquired resources.
+4. For each send, reacquire the shared lock and refresh/validate the current mailbox, profile, lengths, and sequence. Submit the zero-initialized, fixed-width, pointer-free 192-byte `dld_quiet_send` ioctl structure from `include/dld_quiet.h`, using ioctl API version 1 independently of mailbox ABI4. Inputs contain RGB, retained profile/lengths, and expected previous sequence. Do not accept caller-selected MMIO addresses, masks, or loop counts.
 5. The helper validates again, serializes operations, holds the single-CPU/hotplug invariant and CPSW device/runtime-PM/RTNL lifetimes, checks fixed 1 GHz and exclusive PMU availability, and checks other DMA before publication. A pre-publication rejection does not alter PRU state.
 6. The kernel converts RGB to profile wire order, clears the previous grant, and publishes the new sequence with ordering. It owns the finite transaction through completion or cleanup, including if the userspace sender is killed.
 7. For every nonempty bank, wait with IRQs enabled between ordered snapshots for matching `accepted_seq`, `WAIT_BANK`, and `bank_ready`, under a 20 ms gate deadline and 200-attempt cap. Establish and execute the bank window in §9.4.1. Skip empty banks completely.
 8. After all banks, observe overall matching `DONE` and no error under a separate 20 ms final deadline and 200-attempt cap, with IRQs enabled between polls. The PRU performs the full reset/propagation/margin wait. This polling is outside every timed pixel stream.
-9. Return structured status/diagnostics to userspace. Print success only for matching completion and no cancellation. Submitted failure, inconsistent result, uncertain ioctl completion, or handled cancellation is critical (exit 5), requiring §9.6 cleanup and reinitialization.
-10. Release process-local resources and the shared lock. Successful sends leave firmware/configuration intact and all outputs low.
+9. Return structured status/diagnostics to userspace. Report success only for matching completion and no cancellation. The CLI prints its existing success line; the UDP receiver increments its local completed-send counter. Submitted failure, inconsistent result, uncertain ioctl completion, or handled cancellation after publication is critical (exit 5), requiring §9.6 cleanup and reinitialization.
+10. Release the frame lock. The CLI closes process-local resources and exits; the receiver retains them for subsequent packets and closes them on exit. Successful sends leave firmware/configuration intact and all outputs low.
 
 A recognized ioctl normally returns zero and reports execution success/failure in its structured `result` and `submitted` fields. `ENOTTY` and `EPERM` are definitive prepublication rejections and map to CLI exit 3 without cleanup. Other syscall errors leave submission uncertain: in particular, `EFAULT` may occur while copying a result after work executed. The CLI treats those errors as critical and attempts cleanup. A successful raw ioctl transaction whose result cannot be copied back does not itself become a kernel execution failure; see §9.6.
 
@@ -593,15 +619,15 @@ Instruction fetches and cache effects remain; this is not zero interconnect traf
 
 ### 9.5 Concurrency and ownership
 
-Both commands shall refuse to proceed if they cannot obtain their shared exclusive lock. `dld-init` holds it through readiness; `dld-send` holds it through final reset and completion handling. A command encountering a held lock shall fail rather than queue or interrupt the lock holder's operation. The lock coordinates these commands; it does not detect or prevent another program from accessing PRUSS or the LED GPIOs.
+All three commands shall refuse an operation if they cannot obtain their shared exclusive lock. `dld-init` holds it through readiness; the shared sender used by `dld-send` and `dld-udp` holds it through each frame's final reset and completion handling. The UDP receiver releases it between frames but retains its descriptor. A command encountering a held lock shall fail rather than queue or interrupt the lock holder's operation. Such failure terminates the UDP receiver; it does not silently drop the selected color and continue. Stop the receiver before manual sends or reinitialization to avoid competing callers. The lock coordinates these commands; it does not detect or prevent another program from accessing PRUSS or the LED GPIOs.
 
 The synchronous ioctl retains kernel ownership through a submitted request even if its sender is killed; its open-file/lock lifetime normally prevents a cooperating command from entering before that operation finishes. The readiness guard still rejects retained outstanding work without modification. There is no orphan flag, special wait, or automatic resend. Later commands can reuse a successful session. An explicit `dld-init` that obtains the shared lock performs full reinitialization, including stopping outstanding PRU work. Callers must not bypass this lock with independent raw hardware access.
 
 For this iteration, an external test script shall stop the LEDscape service and then invoke `dld-init CONFIG_FILE` with the panel's local configuration. Use the service-control mechanism actually installed on the test board. The script shall ensure LEDscape has exited and will not automatically restart during the test before handing control to `dld-init`. A failed stop or initialization shall prevent the script from continuing to color sends. Service handling belongs to this script, not the CLI commands.
 
-In production, the new driver shall completely replace LEDscape. Remove LEDscape from the production startup path, provide the matching kernel helper and runtime prerequisites, and run `dld-init CONFIG_FILE` after the required UIO/GPIO resources and local configuration are available. Start color-command operation only after initialization succeeds. `dld-init` then exits normally, leaving the PRU and configured state available for subsequent sends; boot initialization does not require a resident host daemon. This is a deployment requirement; the diagnostic bench did not install production startup configuration.
+In production, the new driver shall completely replace LEDscape. Remove LEDscape from the production startup path, provide the matching kernel helper and runtime prerequisites, and run `dld-init CONFIG_FILE` after the required UIO/GPIO resources and local configuration are available. Start color-command operation only after initialization succeeds. `dld-init` then exits normally, leaving the PRU and configured state available for subsequent sends. Start `dld-udp` afterward when receiving the existing controller's packets; the local CLI remains usable without a resident receiver. Stop the receiver before unloading the module or handing the hardware to another application. Production service installation and recovery policy remain deployment work; the diagnostic bench did not install production startup configuration.
 
-`dld-init` and `dld-send` shall not scan for other PRU users, start/stop/kill services or processes, or unload a kernel driver. They trust the test script or production deployment to establish exclusive hardware use.
+`dld-init`, `dld-send`, and `dld-udp` shall not scan for other PRU users, start/stop/kill services or processes, or unload a kernel driver. They trust the test script or production deployment to establish exclusive hardware use.
 
 ### 9.6 Error cleanup
 
@@ -633,7 +659,7 @@ Add final `Tsettle`, bank handling, kernel guard windows, DMA admission, inter-b
 
 Each maximum-length bank has a 9.24 ms kernel timer budget, plus at most 0.5 ms normal CPSW-drain allowance and admission/control/restoration overhead (§9.4.1). Record actual IRQ-off, drain, and stream durations. Gate and final-completion waits retain separate 20 ms policies. Initial and per-bank DMA admission each allow up to 1 second with IRQs enabled between attempts; scheduling can delay observation or syscall return. These admission waits cannot extend an already-granted bank. Initialization retains its 100 ms readiness deadline.
 
-The former acceptance-to-`DONE` requirement of less than 30 ms is withdrawn for the protected path. PRU bank gates intentionally allow Linux/networking to run between streams. Measure acceptance-to-final-`DONE`, first-to-last source edges, ioctl duration, and command duration separately. Do not infer a hard end-to-end deadline from bank bounds. A resident daemon and network/queue policy remain future work.
+The former acceptance-to-`DONE` requirement of less than 30 ms is withdrawn for the protected path. PRU bank gates intentionally allow Linux/networking to run between streams. Measure acceptance-to-final-`DONE`, first-to-last source edges, ioctl duration, and command duration separately. Do not infer a hard end-to-end deadline from bank bounds. The resident shim removes process startup and remapping overhead and coalesces queued packets (§4.5); sustained 20 Hz reception/output and packet loss still require target measurements.
 
 For equal 300-pixel banks, nominal data-only first-to-last bank-completion skew is 17.28 ms. Enabled inter-bank gaps add to it; reset/propagation and shorter strings affect visible updates. Sequential skew remains accepted. No added latch synchronization or synchronization across all 72 panels is required.
 
@@ -662,6 +688,11 @@ deharrak-leds-driver/
 ├── src/
 │   ├── dld_init.c
 │   ├── dld_send.c
+│   ├── dld_sender.c
+│   ├── dld_sender.h
+│   ├── dld_udp.c
+│   ├── dld_opc.c
+│   ├── dld_opc.h
 │   ├── dld_spin.S
 │   ├── dld_common.c
 │   ├── dld_common.h
@@ -685,23 +716,24 @@ Recommended build stages:
 
 1. Build the project-local assembler and assemble `pru/ws2812_uniform.p` for PRU0, retaining an annotated instruction listing.
 2. Check the firmware size and layout below, then convert the binary firmware to a linkable object.
-3. Compile the host code and included AM335x loader using the same versioned pixel-profile definitions as the firmware. The first implementation uses `src/dld_hw.c` as the equivalent loader path permitted in §9.2. Keep the profile name/identifier, wire order, and timing definitions consistent across both commands and the firmware.
+3. Compile the host code and included AM335x loader using the same versioned pixel-profile definitions as the firmware. The first implementation uses `src/dld_hw.c` as the equivalent loader path permitted in §9.2. Keep the profile name/identifier, wire order, and timing definitions consistent across all commands and the firmware.
 4. Build the C/ARM kernel module against `/usr/src/linux-headers-3.8.13-bone80`; inspect its linked grant/PMU-loop/observation path and exported API compatibility.
 5. Link `dld-init` with the firmware blob and shared host support.
-6. Link `dld-send` with shared support and the ioctl interface. Neither product CLI links the retained historical `src/dld_spin.S`; it is used only by diagnostic test/benchmark targets.
+6. Link both `dld-send` and `dld-udp` with the same `dld_sender` object, shared support, and ioctl interface. The UDP program additionally links the OPC parser. No product command links the retained historical `src/dld_spin.S`; it is used only by diagnostic test/benchmark targets.
 
 Required build and implementation checks:
 
 - PRU0 has **8,192 bytes of instruction RAM**, separate from its 8,192-byte local data RAM. Fail the build if the firmware image is empty, is not a multiple of four bytes, or exceeds 8,192 bytes (2,048 instruction words). Its load layout and entry point must fit that instruction region; an assembler success alone is insufficient. The loader shall independently enforce the embedded image's size bounds before copying it. See the [TI AM335x technical reference manual](https://www.ti.com/lit/ug/spruh73q/spruh73q.pdf).
 - Check the shared command-block field offsets and size on both sides of the ABI. Keep the block and any other firmware data within PRU0 data RAM with no overlap. Report firmware instruction/data usage and host executable sizes with the build results.
 - Retain PRU listings and linked module/host disassembly. Audit symbol paths, mask changes, ABI4 gates, grant-to-PMU-loop path, finite guard, and single observation against §§7 and 9.4.1. Check module vermagic/exported symbols against the running kernel. The protected benchmark uses the authorized fixed 1 GHz policy and records former settings for explicit restoration. The September 6 handback retained the prepared state and loaded helper for continued diagnostic use. Audits and engineering guards do not establish installed-panel qualification.
-- Verify that both host executables use the target ARM ABI and only available runtime libraries. Run parsing and other checks that do not take hardware ownership from the dedicated build directory before the separate PRU/GPIO tests. A successful native compile establishes neither waveform correctness nor production qualification.
+- Verify that all three host executables use the target ARM ABI and only available runtime libraries. Run parsing and other checks that do not take hardware ownership from the dedicated build directory before the separate PRU/GPIO tests. A successful native compile establishes neither waveform correctness nor production qualification.
 
 The normal `make` target shall produce:
 
 ```text
 build/dld-init
 build/dld-send
+build/dld-udp
 kernel/dld_quiet.ko
 ```
 
@@ -709,15 +741,16 @@ The `clean` target shall remove only this project's generated firmware, tools, o
 
 ---
 
-## 12. Non-goals for the first pass
+## 12. Non-goals for the current utility
 
-The first implementation does not provide:
+The current utility, including the legacy UDP shim, does not provide:
 
 - independent colors per string;
 - independent colors per pixel;
 - animation, dithering, interpolation, gamma correction, or brightness limiting;
-- UDP reception;
-- a resident host daemon (PRU0 firmware does remain running between commands);
+- TCP reception or complete LEDscape/OPC feature emulation beyond §4.5;
+- packet sequencing, acknowledgments, automatic retransmission, or traffic-timeout blackout;
+- production boot-service installation or automatic driver recovery;
 - independent firmware identity/liveness verification on each send;
 - competing-process detection or automatic service management inside the CLI commands;
 - universal quiescence of every autonomous bus master or portability to an unexamined kernel/appliance;
@@ -738,7 +771,7 @@ This section defines the checks and their limits, not a claim that every product
 
 ### 13.1 Argument parsing
 
-The host test suite shall verify parsing independently for both commands:
+The host test suite shall verify parsing independently for the two one-shot commands:
 
 - `dld-send` accepts every valid six-digit hexadecimal color;
 - `dld-send` accepts optional `0x` and `0X` prefixes;
@@ -747,6 +780,17 @@ The host test suite shall verify parsing independently for both commands:
 - `dld-init` rejects malformed JSON, missing/duplicate/unknown fields, unknown profiles, wrong value types, negative or oversized lengths, fractional values, and arrays shorter or longer than six elements;
 - `dld-init` reports an unreadable file without touching hardware;
 - both commands reject missing or extra arguments before touching hardware, including configuration or length arguments passed to `dld-send`.
+
+For `dld-udp`, verify invalid flags, numeric addresses, and port bounds before
+sender attachment, and `--help` without device access. Test the pure OPC parser
+over header/length boundaries, every channel/command, first-pixel RGB, and
+trailing bytes. Exercise the real receiver over loopback with a fake sender:
+IPv4/IPv6, malformed packets, repeated colors, 64-packet batches, bursts,
+slower-than-20-Hz simulated sends, exclusive bind, idle termination, and fatal
+send/cancellation behavior. Test the shared sender with mocked OS boundaries
+for retained resources, per-frame locking, fresh initialized configuration,
+sequence wrap, rejection/cleanup, and existing CLI behavior. These software
+checks do not establish native 20 Hz output, network loss, or physical timing.
 
 ### 13.2 Pin mapping and exact lengths
 
@@ -869,7 +913,7 @@ The loadable bank-gated helper is required current functionality (§9.4.1). Futu
 
 ### 14.2 Network protocol and pause policy
 
-Current sends pause and restore CPSW separately for each bank. Command-idle preserves descriptors but incoming packets during the pause may be discarded. A future UDP daemon must define sequencing, completion acknowledgements, retry/coalescing, and packet loss. Acknowledge only after overall completion and network restoration. Keeping raw CMD_IDLE asserted while Linux network callbacks run is not an acceptable extension; a longer pause needs integration with the owning driver.
+Current sends pause and restore CPSW separately for each bank. Command-idle preserves descriptors but incoming packets during the pause may be discarded. The current legacy shim (§4.5) coalesces bounded batches and intentionally preserves the unacknowledged OPC/UDP format, without sequencing or retry. Measure its cadence and packet loss with the existing controller before deployment. A future reliable protocol may add completion acknowledgments and retry coordination; acknowledge only after overall completion and network restoration. Keeping raw CMD_IDLE asserted while Linux network callbacks run is not an acceptable extension; a longer pause needs integration with the owning driver.
 
 ### 14.3 Other appliance configurations
 
@@ -877,9 +921,9 @@ The reference board's MMC/EDMA admission, single CPU, disabled PRU1, no swap, `t
 
 For a different kernel/appliance, enumerate and exclude or coordinate additional autonomous masters: USB DMA, audio, LCDC, SGX, SPI/ADC DMA, timer-triggered EDMA, or another PRU. Prefer device/driver ownership and structural elimination of unused masters. An idle snapshot cannot prove an unaccounted external event will not start work during a bank. Do not freeze the root filesystem or globally clear/disable unrelated EDMA as a shortcut.
 
-### 14.4 Resident UDP daemon
+### 14.4 Future reliable UDP protocol
 
-Replace repeated `dld-send` process startup with a resident host process that reuses the initialized PRU, retaining the future 50 ms end-to-end target. Process reuse alone does not establish that bound: scheduling, queueing, Ethernet pause/recovery, and admission policy must be measured and designed for it. The current 1 second admission policy and CLI lifecycle make no such guarantee.
+The current `dld-udp` shim already reuses the initialized PRU and shared sender resources (§4.5). The earlier proposal below is a possible separate controller/protocol revision, not the legacy packet format or a requirement for this shim. Process reuse alone does not establish the desired 50 ms end-to-end bound: scheduling, queueing, Ethernet pause/recovery, and admission policy must be measured and designed for it. The current 1 second admission policy makes no such guarantee.
 
 Suggested packet fields:
 
@@ -891,7 +935,7 @@ struct udp_led_command {
 };
 ```
 
-Required protocol behavior:
+Candidate behavior for that future protocol:
 
 - monotonically increasing sequence numbers;
 - duplicate suppression;
@@ -899,7 +943,7 @@ Required protocol behavior:
 - sender retry after timeout;
 - validation before entering the quiet window;
 - coalescing of queued color updates so stale intermediate colors are dropped;
-- retain the separation between panel profile/length configuration and high-rate color commands established by `dld-init` and `dld-send`; load persistent local configuration at startup rather than adding an independent enable mask to color packets.
+- retain the separation between panel profile/length configuration and high-rate color commands: only `dld-init` reads persistent local configuration, and either sender uses the initialized copy in PRU memory rather than adding an independent enable mask to color packets.
 
 ### 14.5 Disabled-string blackout semantics
 

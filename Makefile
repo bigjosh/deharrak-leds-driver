@@ -10,9 +10,10 @@ LDLIBS += -lrt
 
 PASM_SOURCES = $(addprefix vendor/pasm/,pasm.c pasmpp.c pasmexp.c pasmop.c pasmdot.c pasmstruct.c pasmmacro.c)
 COMMON_OBJECTS = build/dld_common.o build/dld_hw.o
+SENDER_OBJECTS = build/dld_sender.o $(COMMON_OBJECTS)
 
 .PHONY: all clean test test-native audit report kernel-module
-all: build/dld-init build/dld-send kernel-module
+all: build/dld-init build/dld-send build/dld-udp kernel-module
 
 KDIR ?= /lib/modules/$(shell uname -r)/build
 kernel-module:
@@ -34,7 +35,7 @@ build/pru_blob.c: build/pru.bin
 build/pru_blob.o: build/pru_blob.c include/dld_abi.h
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
-build/%.o: src/%.c include/dld_abi.h include/dld_profiles.h include/dld_quiet.h src/dld_common.h src/dld_hw.h | build
+build/%.o: src/%.c include/dld_abi.h include/dld_profiles.h include/dld_quiet.h src/dld_common.h src/dld_hw.h src/dld_sender.h src/dld_opc.h | build
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
 build/dld_spin.o: src/dld_spin.S include/dld_abi.h | build
@@ -43,14 +44,23 @@ build/dld_spin.o: src/dld_spin.S include/dld_abi.h | build
 build/dld-init: build/dld_init.o $(COMMON_OBJECTS) build/pru_blob.o
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
-build/dld-send: build/dld_send.o $(COMMON_OBJECTS)
+build/dld-send: build/dld_send.o $(SENDER_OBJECTS)
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+
+build/dld-udp: build/dld_udp.o build/dld_opc.o $(SENDER_OBJECTS)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 build/test-common: tests/test_common.c build/dld_common.o build/dld_spin.o
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
-build/test-send-syscall: tests/test_send_syscall.c src/dld_send.c build/dld_common.o include/dld_quiet.h
+build/test-send-syscall: tests/test_send_syscall.c src/dld_send.c src/dld_sender.c src/dld_sender.h build/dld_common.o include/dld_quiet.h
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ tests/test_send_syscall.c build/dld_common.o $(LDLIBS)
+
+build/test-opc: tests/test_opc.c src/dld_opc.c src/dld_opc.h | build
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ tests/test_opc.c src/dld_opc.c
+
+build/test-udp: src/dld_udp.c src/dld_opc.c src/dld_opc.h src/dld_sender.h tests/fake_udp_sender.c | build
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ src/dld_udp.c src/dld_opc.c tests/fake_udp_sender.c $(LDLIBS)
 
 build/test-admission: tests/test_admission.c kernel/dld_admission.h | build
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ tests/test_admission.c $(LDLIBS)
@@ -64,15 +74,18 @@ build/hw-probe: tests/hw_probe.c build/dld_hw.o include/dld_abi.h
 build/quiet-kernel-probe: tests/quiet_kernel_probe.c build/dld_hw.o include/dld_quiet.h include/dld_abi.h
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ tests/quiet_kernel_probe.c build/dld_hw.o $(LDLIBS)
 
-test-native: all build/test-common build/test-send-syscall build/test-admission
+test-native: all build/test-common build/test-send-syscall build/test-admission build/test-opc build/test-udp
 	build/test-common
 	build/test-send-syscall
 	build/test-admission
+	build/test-opc
+	$(PYTHON) tests/test_udp.py "$(CURDIR)/build/test-udp"
 	sh tests/test_cli.sh "$(CURDIR)/build"
 
 audit: all
 	objdump -d build/dld-send > build/dld-send.dis
 	objdump -d build/dld-init > build/dld-init.dis
+	objdump -d build/dld-udp > build/dld-udp.dis
 	$(PYTHON) tests/pru_audit.py build/pru.bin build/pru.lst
 	$(MAKE) -C kernel audit
 
@@ -83,4 +96,4 @@ report: all
 	cat build/build-report.txt
 
 clean:
-	rm -f build/*.o build/dld-init build/dld-send build/test-common build/test-send-syscall build/test-admission build/bench-spin build/hw-probe build/quiet-kernel-probe build/pasm build/pru.bin build/pru.txt build/pru.lst build/pru_blob.c build/*.dis build/build-report.txt
+	rm -f build/*.o build/dld-init build/dld-send build/dld-udp build/test-common build/test-send-syscall build/test-admission build/test-opc build/test-udp build/bench-spin build/hw-probe build/quiet-kernel-probe build/pasm build/pru.bin build/pru.txt build/pru.lst build/pru_blob.c build/*.dis build/build-report.txt

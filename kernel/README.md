@@ -6,6 +6,11 @@ pointer-free `DLD_QUIET_IOCTL_SEND` interface in `include/dld_quiet.h`.
 The ioctl additionally requires `CAP_SYS_RAWIO`. This is a board-specific
 helper for the exclusively owned DLD session, not a general DMA arbiter.
 
+Both `dld-send` and `dld-udp` call this interface through the same internal
+sender module. The resident receiver keeps the device open between updates;
+stop it before unloading or replacing this helper. See the
+[UDP operating guide](../docs/udp.md) for its lifecycle and packet format.
+
 Run from the repository root and build against the exact running kernel's
 prepared headers, generated configuration, and `Module.symvers`. The validated
 native toolchain is GCC 4.6.3/binutils 2.22 on the armhf board:

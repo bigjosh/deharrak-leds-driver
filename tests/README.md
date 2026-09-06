@@ -34,11 +34,41 @@ storage becoming idle after 75 ms, a full one-second timeout, the independent
 result is retried. No grant occurs while admission reports busy. This tests the
 policy, not actual peripheral idleness or Linux scheduling.
 
-`test_send_syscall.c` compiles the actual sender entry point with device and
-lock boundaries replaced by stubs. It checks five syscall outcomes, including
-preserving a valid session after definitive rejection and cleaning up an
-uncertain result after a simulated completed frame. It opens no devices or
-lock files and requires no privileges.
+`test_send_syscall.c` compiles the actual `dld-send` entry point and shared
+`dld_sender` module with device and lock boundaries replaced by stubs. It
+retains the five original syscall outcomes, including preserving a valid
+session after definitive rejection and cleaning up an uncertain result after
+a simulated completed frame. Resident-sender checks cover repeated sends with
+one attachment, per-frame locking, fresh configuration after reinitialization,
+intervening sequence advancement and wrap, busy/invalid mailbox rejection,
+prepublication cancellation, critical-result cleanup, failed-context reuse,
+and closing partial attachments. It opens no devices or lock files and
+requires no privileges.
+
+`test_opc.c` exercises the pure UDP payload parser: all channel/command values,
+header and declared-length boundaries, big-endian length, the largest normal
+IPv4 datagram payload, first-pixel selection, and ignored trailing messages.
+Rejected packets must leave the caller's selected color untouched. It opens
+no sockets or devices.
+
+`test_udp.py` runs the real receiver/socket loop linked with
+`tests/fake_udp_sender.c` instead of the hardware sender. It uses temporary files
+and local loopback UDP sockets, with no device access or BBG connection.
+Tests cover malformed/unsupported packets, retained attachment, repeated
+colors, bounded coalescing, paced 20 Hz input with both faster and slower fake
+senders, IPv4/IPv6 and IPv4 broadcast reception, exclusive binding, idle signals, fatal sender
+errors, in-flight cancellation, and option/help validation. The harness uses
+POSIX signals including `SIGSTOP`/`SIGCONT`, so run it on Linux; it supports
+the board's Python 3.2 and needs no extra Python packages. Its simulated 20 Hz
+cases test the receiver and queue policy, not actual hardware throughput or Ethernet loss.
+
+These checks are included in `make test-native`. To rerun just the packet and
+socket tests after building their targets:
+
+```sh
+build/test-opc
+python3 tests/test_udp.py build/test-udp
+```
 
 `test_cli.sh` takes one build-directory argument and invokes the actual commands
 only with invalid syntax, invalid configuration contents, or a nonexistent
@@ -72,9 +102,10 @@ Python 3.2 board test. It covers corrupt exports, pulse windows, reset/frame
 boundaries, colors, bank order, and shared-prefix edge alignment.
 
 Do not use broad `unittest discover` over `test_*.py` for Windows offline checks:
-that also imports the separately invoked Linux live harnesses, which require
-`fcntl`. None of the three explicit commands above contacts BBG, Saleae, or
-the Logic application.
+that also imports the Linux UDP harness and separately invoked live harnesses,
+which require POSIX facilities such as `fcntl` and Unix signals. None of the
+three explicit offline commands above contacts BBG, Saleae, or the Logic
+application.
 
 ## Native build isolation and read-only inspection
 
@@ -116,6 +147,16 @@ event, and the documented absence of competing autonomous masters. These
 requirements apply even when all six lengths are zero. The harnesses neither
 establish ownership nor load/unload the helper. Do not build or run another
 test/sender alongside an exclusive physical capture.
+
+Stop `dld-udp` before running the existing direct-CLI live suites. For a
+separately authorized UDP qualification run, initialize once, start only the
+receiver, and drive the actual network input. Correlate controller timestamps,
+local received/coalesced/completed counts, and physical captures at 20 Hz,
+under burst traffic, and with the agreed background loads. Include both zero
+and one bits. Record packet loss and capture gaps; the shim has no remote
+acknowledgment, and local counters cannot count frames dropped before socket
+reception. Do not equate the prior CLI endurance results or fake-sender
+loopback tests with completed UDP hardware qualification.
 
 Use short, controlled runs to check all-output-low initialization, each pin's
 mapping, exact unequal string lengths, profile byte order, final settling, and
@@ -166,7 +207,7 @@ protected run are retained in the [bench report](../docs/validation-20260906.md)
 
 `hw_probe.c` and `test_hardware.py` are separate test helpers; neither is invoked
 by the product commands or `make test`. Build `hw-probe` with the same
-absolute project-local `DLD_LOCK_PATH` as both CLIs. For example, after the normal
+absolute project-local `DLD_LOCK_PATH` as the product commands. For example, after the normal
 native objects have been built in the new project directory:
 
 ```sh

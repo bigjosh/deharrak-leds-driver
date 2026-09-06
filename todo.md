@@ -1,6 +1,6 @@
 # Spec review TODO
 
-Track the pre-implementation review of `spec.md` and resolve the items one at a time through discussion.
+Track the original design review and subsequent utility integration decisions in `spec.md`; resolve open discussion items one at a time.
 
 First-pass design review, the protected implementation, and the September 6 bench endurance work are complete. The physical bench found repeated GPIO0 pulse/period violations in the original userspace-only implementation, after which the user explicitly authorized the kernel quiet-window helper and runtime preparation. Current behavior uses ABI4 and the required kernel helper. The final endurance run recorded 155,917 successful sends, no failed sends, and no observed waveform violations in 4,452,206,525 complete captured pulses. Installed-panel qualification and production rollout remain open. See the [current physical bench report](docs/validation-20260906.md) and [historical bring-up report](docs/validation.md) for evidence and limits.
 
@@ -43,10 +43,10 @@ For each item, record the agreed decision here, update the relevant parts of `sp
   - A stopped PRU with an apparently ready block fails to acknowledge a new submitted request within the bounded gate/final-completion policy (critical exit code 5). Malformed state fails before submission (exit code 7), and retained `RUNNING`/`WAIT_BANK`/outstanding state uses the existing busy rejection (exit code 6). Recovery remains an explicit `dld-init`.
 
 - [x] **6. Ownership and service coexistence** — spec §§3, 4.4, 9.5, 13.7.
-  - Decision: the shared lock coordinates cooperating `dld-init`/`dld-send` invocations only. The commands trust the deployment to exclude LEDscape and other PRU users; no process scanning or automatic service management is added to the CLI.
+  - Decision: the shared lock coordinates cooperating DLD operations only, now including `dld-udp` sends under item 18. The commands trust the deployment to exclude LEDscape and other PRU users; no process scanning or automatic service management is added to the CLI.
   - For testing, an external script stops the LEDscape service, ensures it has exited and will not restart during the test, then calls `dld-init CONFIG_FILE`. Failed shutdown or initialization prevents further sends.
   - In production, replace LEDscape completely and remove it from startup. Provide the matching helper and runtime prerequisites, then run `dld-init CONFIG_FILE` at boot; begin color-command operation only after it succeeds. This deployment policy is agreed, but production boot integration has not been performed.
-  - Service-control details belong to the test script and production boot setup for the actual deployed system. Boot initialization retains the existing one-time CLI/long-lived PRU lifecycle and requires no resident host daemon.
+  - Service-control details belong to the test script and production boot setup for the actual deployed system. Boot initialization retains the existing one-time CLI/long-lived PRU lifecycle; the optional UDP receiver starts after successful initialization, while local sends require no resident host daemon.
 
 - [x] **7. Waveform acceptance limits and measurement points** — spec §§7, 10, 13.4, 15.
   - Decision: use `T0H = 350 ns`, `T1H = 700 ns`, and `Tbit = 1,200 ns` for both WS2812B and WS2811 high-speed profiles initially, then adjust as required from hardware testing. `Tbit` is rising edge to rising edge, including across pixel boundaries; the resulting lows are `T0L = 850 ns` and `T1L = 500 ns`.
@@ -96,9 +96,9 @@ Item 13 supersedes its earlier deferral. The remaining unchecked items are follo
   - Implemented and loaded on the supplied BBG. Native functional and machine-code audits pass; the live lifecycle, sender-signal, and direct kernel fatal-sender cleanup tests pass. The full 129-case physical matrix and initial longer zero/one captures pass. Completed varied-load and overnight evidence is recorded separately below and in the current report.
 
 - [ ] **14. Ethernet packet loss during CPDMA idle** — spec §§14.2, 14.4.
-  - Account explicitly for incoming frames discarded during command-idle windows.
-  - Define the implications for command cadence, acknowledgment/retry behavior, and controller coordination.
-  - Decision: pending.
+  - The legacy shim in item 18 intentionally preserves OPC/UDP without acknowledgment, sequencing, or retry. It coalesces bounded batches of queued updates and cannot count packets lost before reaching its socket, including during command-idle windows.
+  - Measure actual controller cadence, received/sent rates, loss, and visible behavior at the intended 20 Hz. Resource reuse alone does not guarantee a 50 ms update deadline; protected admission and Linux scheduling remain in the path.
+  - A reliable sequenced/acknowledged protocol remains a separate possible controller revision, not a requirement of legacy emulation. End-to-end loss and cadence qualification remain open.
 
 - [x] **15. Protected waveform bench endurance**.
   - Completed six-channel 500 MS/s physical testing with the unchanged 50 ns timing limits. The final protected run completed fourteen full phases and a shortened final black phase from 06:50:11 through 13:10:23 UTC: 155,917 successful sends, zero failed sends, all sender/load exits zero, and no cleanup errors. The supervisor's retained cancellation and generic final-phase failure labels record the deliberate 13:10:21 handback STOP, not a driver or waveform failure; the final phase is not claimed as a complete 1,800-second run.
@@ -106,10 +106,16 @@ Item 13 supersedes its earlier deferral. The remaining unchecked items are follo
   - Handback passed all sixteen checks at 13:10:40–13:10:41 UTC. The tested helper and CPU/LED preparation remain active; the valid ABI4 mailbox is DONE at sequence 2,132 with `ws2812b`, six lengths of 300, and black. All six GPIO outputs are low, owned workers have exited, no new kernel messages appeared, and unrelated activity was left untouched. Bench completion does not close installed-panel qualification or production rollout.
 
 - [ ] **16. Production rollout**.
-  - Qualify the installed panel/profile and provide the agreed boot ownership, kernel helper, runtime prerequisites, and successful initialization before accepting colors. Current bench handback is continued diagnostic use; it does not install production startup configuration or resolve the future network protocol.
+  - Qualify the installed panel/profile and provide the agreed boot ownership, kernel helper, runtime prerequisites, and successful initialization before accepting colors. Run the legacy UDP receiver afterward when replacing the existing network input, and decide explicit service recovery behavior for fatal sender errors. Current bench handback and the shim implementation do not install production startup configuration or qualify controller-to-panel delivery.
 
 - [ ] **17. Installed-panel qualification**.
   - Verify installed pixel family/color order and waveforms after level shifting and at the final pixel before production. The current bench's legacy configuration says GBR; the existing diagnostic profiles do not establish that physical order. Digital header captures do not prove downstream LED latch behavior, electrical margins, or complete chain settling. Confirm reset/propagation bounds and profile margins on the installed hardware.
+
+- [x] **18. Legacy UDP input and reusable sender** — spec §§4.5, 9.4–9.5.
+  - User-approved architecture: retain `dld-send` and move its transmission lifecycle into one internal C sender linked by both the CLI and a resident `dld-udp` process. Keep mappings, kernel-device descriptor, and lock descriptor open; lock per frame and refresh the initialized mailbox/profile/lengths on each send. Only `dld-init` reads the local JSON file. No fork, configuration-file I/O, firmware reload, or per-packet remapping.
+  - Receive the first pixel of the first OPC message in each UDP datagram, using logical RGB bytes 4–6, command zero, and a complete declared payload of at least three bytes. Channel is ignored; trailing bytes are allowed. Defaults remain dual-stack UDP port 7890; optional numeric bind address and port select the listener.
+  - Coalesce up to 64 datagrams per receive batch, selecting the newest valid color; malformed input cannot replace a selected valid color. Repeated identical colors still send. No acknowledgment, sequencing, automatic retransmission, TCP, gamma/dither/interpolation, or timeout/demo behavior is added.
+  - Run in the foreground after initialization. Idle handled signals stop normally; every sender error terminates the receiver with the existing diagnostic/exit code and no automatic recovery. Stop the receiver before manual operations, module unload, or handover. Shared sender/packet/loopback software tests do not replace target 20 Hz, packet-loss, and waveform qualification under items 14 and 17.
 
 ## Reference material from the review
 

@@ -149,7 +149,7 @@ For example, create a new runtime directory and build with its private lock:
 DLD_RUNTIME_DIR=$(mktemp -d /run/dld-protected.XXXXXX)
 make KDIR=/usr/src/linux-headers-3.8.13-bone80 LOCK_PATH="$DLD_RUNTIME_DIR/dld.lock"
 make KDIR=/usr/src/linux-headers-3.8.13-bone80 LOCK_PATH="$DLD_RUNTIME_DIR/dld.lock" test-native audit
-cp build/dld-init build/dld-send "$DLD_RUNTIME_DIR/"
+cp build/dld-init build/dld-send build/dld-udp "$DLD_RUNTIME_DIR/"
 ```
 
 Use the panel's reviewed JSON file for initialization; an example profile does

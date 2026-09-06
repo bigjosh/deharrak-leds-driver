@@ -5,6 +5,7 @@ __pycache__/
 *.pyc
 /kernel/*.o
 /kernel/*.ko
+/kernel/*.dis
 /kernel/*.mod.c
 /kernel/.*.cmd
 /kernel/.*.d

@@ -1,9 +1,9 @@
 # Deharrak LED driver
 
 DLD drives the Deharrak Clock's LED panels from a BeagleBone Green. It replaces
-LEDscape's rendering role with two commands: initialize a panel once, then send
-a color whenever the display needs to change. Each panel supports six strings
-of up to 300 pixels; every enabled pixel receives the same RGB color.
+LEDscape's rendering role: initialize a panel once, then receive its existing
+UDP color packets or send colors from the command line. Each panel supports
+six strings of up to 300 pixels; every enabled pixel receives the same RGB color.
 
 ```sh
 # On a prepared BBG, from the build's source directory:
@@ -11,12 +11,13 @@ build/dld-init config/panel.json
 build/dld-send FF0000  # Red
 build/dld-send 00FF00  # Green
 build/dld-send 000000  # Black
+# Or receive existing LEDscape OPC/UDP packets on port 7890:
+build/dld-udp
 ```
 
-The current utility provides the local command interface and protected PRU
-output. Automatic startup and the network receiver that will connect it to
-the clock controller are the next integration work. Use the setup below for
-manual operation on the supported board.
+The UDP shim uses the first RGB pixel of each accepted packet as the uniform
+color for the entire panel. It runs in the foreground after initialization;
+production boot-service installation remains separate integration work.
 
 ## How it works
 
@@ -31,6 +32,11 @@ has elapsed. The PRU drives one GPIO bank at a time. Before each bank, the
 required `dld_quiet` kernel helper pauses ARM execution and Ethernet DMA and
 checks the relevant storage/DMA engines for inactivity. Linux and networking
 resume between banks. This protects the GPIO timing on the existing wiring.
+
+`dld-udp` receives the existing LEDscape OPC-over-UDP format and calls the same
+shared C sender as `dld-send`. It keeps its device and memory mappings open,
+reads the current initialized configuration from PRU memory for each send,
+and performs no configuration-file I/O or process launch per packet.
 
 The [protected-operation guide](docs/quiet-window.md) explains the timing,
 ownership requirements, and failure handling in detail. The
@@ -69,7 +75,7 @@ make -j2
 make test report
 ```
 
-The outputs are `build/dld-init`, `build/dld-send`, and
+The outputs are `build/dld-init`, `build/dld-send`, `build/dld-udp`, and
 `kernel/dld_quiet.ko`; firmware is embedded in `dld-init`. Use commands and a
 module from the same build. See the [build guide](docs/build.md) for SSH and
 compiler prerequisites, lock paths, rebuilding, and optional Windows PRU
@@ -121,7 +127,7 @@ reset and propagation allowances are defined in the [specification](spec.md).
 Installed-panel color order and downstream timing still need qualification.
 
 The configuration file is read only by `dld-init`. Changes are applied by the
-next initialization; `dld-send` continues using the retained configuration
+next initialization; both senders continue using the retained configuration
 until then. A failed initialization can invalidate the previous session.
 
 ## Start the driver
@@ -173,16 +179,45 @@ wait. Success prints one line beginning with `OK`; errors go to stderr.
 
 Wait for one command to finish before starting the next. DLD does not queue
 overlapping commands; a nonblocking lock rejects concurrent initialization or
-sends. Use one build's command pair and lock path for the active session.
-There is no background userspace process to keep alive between updates, and
-no continuous refresh is needed to retain the last color.
+sends. Use one build's commands and lock path for the active session.
+The command-line path needs no resident process, and no continuous refresh is
+needed to retain the last color. Stop `dld-udp` before manual command testing
+or configuration changes; a conflicting send fails rather than waiting.
+
+## Receive colors from the existing controller
+
+After [driver startup](#start-the-driver), run:
+
+```sh
+build/dld-udp
+```
+
+It listens on UDP port **7890**, on IPv4 and IPv6 by default. For an explicit
+IPv4 address or different port:
+
+```sh
+build/dld-udp --bind 0.0.0.0 --port 7890
+```
+
+Each packet must contain an OPC header with command zero and a complete
+declared payload of at least three bytes. The first pixel is logical RGB;
+the local panel profile still determines wire order. Other pixels are ignored.
+Queued updates are coalesced in bounded batches so a burst favors the latest
+valid color; malformed packets are discarded. A repeated color is sent again.
+
+The shim exits on a sender error, without retrying or reinitializing. It sends
+no acknowledgment, does not black out on packet silence, and preserves no
+application-side frame queue. Stop it with Ctrl+C or `SIGTERM` before unloading
+the helper or returning control to LEDscape. See the [UDP operating guide](docs/udp.md)
+for the packet format, lifecycle, counters, and recovery behavior.
 
 A 300-pixel bank uses a nominal 9.24 ms protected window, plus setup and
 restoration overhead. Whole-command latency includes all active banks,
 settling, admission waits, and Linux scheduling between banks. Ethernet
 reception pauses during each window and incoming packets can be lost. The
-future controller integration must account for that; the CLI itself provides
-no network protocol or delivery acknowledgment to a remote controller.
+controller must account for that. The shim is compatible with the legacy
+unacknowledged packet format; sustained 20 Hz output and end-to-end latency
+still need measurement on the target with the real controller.
 
 ## Handle errors
 
@@ -190,9 +225,9 @@ Check the exit status and preserve stderr before deciding what to do next:
 
 | Exit | Meaning and action |
 |---:|---|
-| 0 | Completed successfully. |
+| 0 | Completed successfully, or the UDP receiver stopped normally. |
 | 2 | Invalid color, arguments, or configuration; correct the input. |
-| 3 | Missing prerequisite or unreadable configuration; resolve the reported cause. |
+| 3 | Missing prerequisite, unreadable configuration, or socket error; resolve the reported cause. |
 | 4 | Initialization failed; resolve the cause and initialize again. |
 | 5 | Critical or uncertain send failure; stop updates, inspect the error, and reinitialize before resuming. |
 | 6 | Command/session busy; allow the active operation to finish and coordinate callers. |
@@ -208,7 +243,7 @@ for detailed diagnostics and cancellation behavior.
 
 ## Return control to LEDscape
 
-Stop the calling application and all send loops, and wait for active commands
+Stop `dld-udp`, the calling application, and all send loops; wait for active commands
 to finish. To return to the previous runtime settings and service, use the
 state file saved for this session:
 
@@ -226,7 +261,7 @@ and initialization again before using DLD.
 
 The investigation and test records remain part of this repository:
 
-- [Build guide](docs/build.md), [hardware reference](docs/hardware.md), and
+- [UDP operating guide](docs/udp.md), [build guide](docs/build.md), [hardware reference](docs/hardware.md), and
   [full specification](spec.md): supported environment and command contract.
 - [Protected operation](docs/quiet-window.md), [kernel helper](kernel/README.md),
   and [PRU firmware](pru/README.md): how the timing protection works.

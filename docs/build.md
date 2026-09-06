@@ -74,8 +74,8 @@ make -j2 LOCK_PATH="$PWD/dld.lock"
 make LOCK_PATH="$PWD/dld.lock" test report
 ```
 
-`make` builds both commands and the helper. `make test` runs pure C and
-admission-policy checks, CLI rejection and mocked ioctl-error tests, the PRU
+`make` builds all three commands and the helper. `make test` runs pure C and
+admission-policy checks, CLI rejection, shared-sender and UDP loopback tests, the PRU
 instruction model, and the emitted kernel instruction audit. It does not
 access GPIO or PRU hardware. The separately invoked live and host Python
 suites are documented in the [test guide](../tests/README.md).
@@ -90,7 +90,7 @@ make KDIR=/path/to/matching/build LOCK_PATH="$PWD/dld.lock" test report
 
 `LOCK_PATH` is compiled into the commands. Omitting it selects
 `/var/lock/dld.lock`; an environment variable at runtime cannot change that
-choice. Use both commands from the same build. Build-local locks do not
+choice. Use all three commands from the same build. Build-local locks do not
 coordinate different builds, so run only one build's initialized session
 at a time. A shared deployment should compile every cooperating command
 with the same absolute lock path.
@@ -118,12 +118,13 @@ Paths below are relative to the source directory where the native build ran.
 |---|---|
 | `build/dld-init` | Initializer containing the embedded PRU image |
 | `build/dld-send` | Uniform-color sender |
+| `build/dld-udp` | Resident first-pixel OPC/UDP receiver, using the same sender |
 | `kernel/dld_quiet.ko` | Matching protected-transmission helper |
 | `build/pasm` | Project-local PRU assembler |
 | `build/pru.bin` | PRU instruction image |
 | `build/pru.lst`, `build/pru.txt` | Assembler listings |
 | `build/pru_blob.c` | Generated image embedded in `dld-init` |
-| `build/dld-init.dis`, `build/dld-send.dis` | ARM disassembly produced by `make audit` |
+| `build/dld-init.dis`, `build/dld-send.dis`, `build/dld-udp.dis` | ARM disassembly produced by `make audit` |
 | `kernel/dld_quiet.dis` | Linked module disassembly audited by `make audit` |
 | `build/build-report.txt` | Toolchain, sizes, ARM attributes, dependencies, module metadata, and SHA256 hashes from `make report` |
 

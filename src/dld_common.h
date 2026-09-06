@@ -40,7 +40,7 @@ struct dld_completion {
 #define DLD_CONTROL_NS UINT64_C(500000)
 #define DLD_HOST_GUARD_NS UINT64_C(1000000)
 
-/* Both commands must be built with the same fixed path. A dedicated test build
+/* All commands must be built with the same fixed path. A dedicated test build
  * may set an absolute project-local path without changing deployed defaults.
  * There is deliberately no environment variable or per-command override.
  */
@@ -80,7 +80,7 @@ const char *dld_error_name(uint32_t detail);
 void dld_print_configuration(const struct dld_config *config);
 
 /* Historical userspace countdown, retained only for the dummy-memory benchmark.
- * Neither ABI4 product CLI links or calls it; the kernel owns real grants.
+ * No ABI4 product command links or calls it; the kernel owns real grants.
  */
 void dld_publish_spin(volatile struct dld_command *command,
                        uint32_t wire_color, uint32_t request_seq,

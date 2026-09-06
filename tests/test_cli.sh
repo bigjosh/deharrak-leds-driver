@@ -11,8 +11,9 @@ fi
 build_dir=$(CDPATH= cd "$1" && pwd)
 init=$build_dir/dld-init
 send=$build_dir/dld-send
-if [ ! -x "$init" ] || [ ! -x "$send" ]; then
-    echo "missing executable dld-init or dld-send in $build_dir" >&2
+udp=$build_dir/dld-udp
+if [ ! -x "$init" ] || [ ! -x "$send" ] || [ ! -x "$udp" ]; then
+    echo "missing executable dld-init, dld-send or dld-udp in $build_dir" >&2
     exit 1
 fi
 
@@ -53,6 +54,11 @@ expect_rejected "send long color" 2 "$send" 1234567
 expect_rejected "send nonhex color" 2 "$send" 12345g
 expect_rejected "send shell-style color" 2 "$send" '#123456'
 expect_rejected "send whitespace" 2 "$send" '123456 '
+expect_rejected "UDP unknown option" 2 "$udp" --not-an-option
+expect_rejected "UDP missing port" 2 "$udp" --port
+expect_rejected "UDP zero port" 2 "$udp" --port 0
+expect_rejected "UDP oversized port" 2 "$udp" --port 65536
+expect_rejected "UDP nonnumeric address" 2 "$udp" --bind not-a-numeric-address
 expect_rejected "init missing argument" 2 "$init"
 expect_rejected "init extra argument" 2 "$init" "$test_dir/panel.json" extra
 expect_rejected "init missing file" 3 "$init" "$test_dir/does-not-exist.json"

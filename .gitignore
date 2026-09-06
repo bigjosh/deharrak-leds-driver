@@ -1,0 +1,13 @@
+/build/
+.venv/
+.pytest_cache/
+__pycache__/
+*.pyc
+/kernel/*.o
+/kernel/*.ko
+/kernel/*.mod.c
+/kernel/.*.cmd
+/kernel/.*.d
+/kernel/.tmp_versions/
+/kernel/Module.symvers
+/kernel/modules.order

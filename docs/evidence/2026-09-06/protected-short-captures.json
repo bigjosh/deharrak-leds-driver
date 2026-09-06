@@ -1,0 +1,2034 @@
+{
+  "record_type": "derived summary",
+  "provenance": {
+    "sources": [
+      {
+        "archive_path": "build/bench-20260906/protected-smoke-001/status.json",
+        "sha256": "ea21da4d309d243fdb13de456de7c807a9cf39b93d2313e2006ef1376cc742bb",
+        "bytes": 2240
+      },
+      {
+        "archive_path": "build/bench-20260906/protected-matrix-001/status.json",
+        "sha256": "f70765219af89e3cfba60b094018acaf0114daf186352f70ca3d19fcdfb95eee",
+        "bytes": 53459
+      },
+      {
+        "archive_path": "build/bench-20260906/protected-final-smoke/status.json",
+        "sha256": "1c254e38baa3ef56371798b479b034409bdcbce05926797cd7e036b28e9873d0",
+        "bytes": 2241
+      },
+      {
+        "archive_path": "build/bench-20260906/protected-loaded-001/status.json",
+        "sha256": "94548bdedc1b892b8df69c0b4078f8a0869698b26afe2c07fd2c6dc31cc9074e",
+        "bytes": 27356
+      },
+      {
+        "archive_path": "build/bench-20260906/protected-signals-and-matrix-review.json",
+        "sha256": "b7296845cd01aaa75157d180d36b66f7ed9079dfb15eff96bbcb6f71a442490e",
+        "bytes": 12824
+      }
+    ],
+    "extraction": "Existing smoke, matrix, signal-capture and loaded-scout records; sender/process details omitted. No coverage totals recomputed.",
+    "numerical_policy": "Selected original values and text; no measurement values recomputed."
+  },
+  "data": {
+    "protected-smoke-001": {
+      "status": "pass",
+      "completed": [
+        {
+          "case": "disabled",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 0,
+            "complete_channel_frames": 0,
+            "complete_bursts": 0,
+            "complete_frame_bits": 0,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.11288864
+        },
+        {
+          "case": "one-black",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 432,
+            "complete_channel_frames": 18,
+            "complete_bursts": 0,
+            "complete_frame_bits": 432,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.13525824
+        },
+        {
+          "case": "one-white",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 432,
+            "complete_channel_frames": 18,
+            "complete_bursts": 0,
+            "complete_frame_bits": 432,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.129665856
+        },
+        {
+          "case": "full-black",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 432000,
+            "complete_channel_frames": 60,
+            "complete_bursts": 0,
+            "complete_frame_bits": 432000,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.398101312
+        },
+        {
+          "case": "full-white",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 432000,
+            "complete_channel_frames": 60,
+            "complete_bursts": 0,
+            "complete_frame_bits": 432000,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.381324096
+        }
+      ],
+      "updated_utc": "2026-09-06T04:37:20.898543+00:00",
+      "started_utc": "2026-09-06T04:37:06.467469+00:00"
+    },
+    "protected-matrix-001": {
+      "status": "pass",
+      "completed": [
+        {
+          "case": "disabled",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 0,
+            "complete_channel_frames": 0,
+            "complete_bursts": 0,
+            "complete_frame_bits": 0,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 0.989855744
+        },
+        {
+          "case": "pin0-length1",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 72,
+            "complete_channel_frames": 3,
+            "complete_bursts": 0,
+            "complete_frame_bits": 72,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.00663296
+        },
+        {
+          "case": "pin0-length300",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 21600,
+            "complete_channel_frames": 3,
+            "complete_bursts": 0,
+            "complete_frame_bits": 21600,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.017817728
+        },
+        {
+          "case": "pin1-length1",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 72,
+            "complete_channel_frames": 3,
+            "complete_bursts": 0,
+            "complete_frame_bits": 72,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.02900256
+        },
+        {
+          "case": "pin1-length300",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 21600,
+            "complete_channel_frames": 3,
+            "complete_bursts": 0,
+            "complete_frame_bits": 21600,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.023410176
+        },
+        {
+          "case": "pin2-length1",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 72,
+            "complete_channel_frames": 3,
+            "complete_bursts": 0,
+            "complete_frame_bits": 72,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.02900256
+        },
+        {
+          "case": "pin2-length300",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 21600,
+            "complete_channel_frames": 3,
+            "complete_bursts": 0,
+            "complete_frame_bits": 21600,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.05137216
+        },
+        {
+          "case": "pin3-length1",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 72,
+            "complete_channel_frames": 3,
+            "complete_bursts": 0,
+            "complete_frame_bits": 72,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 0.984263296
+        },
+        {
+          "case": "pin3-length300",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 21600,
+            "complete_channel_frames": 3,
+            "complete_bursts": 0,
+            "complete_frame_bits": 21600,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.023410176
+        },
+        {
+          "case": "pin4-length1",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 72,
+            "complete_channel_frames": 3,
+            "complete_bursts": 0,
+            "complete_frame_bits": 72,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 0.961893696
+        },
+        {
+          "case": "pin4-length300",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 21600,
+            "complete_channel_frames": 3,
+            "complete_bursts": 0,
+            "complete_frame_bits": 21600,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.023410176
+        },
+        {
+          "case": "pin5-length1",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 72,
+            "complete_channel_frames": 3,
+            "complete_bursts": 0,
+            "complete_frame_bits": 72,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.252698752
+        },
+        {
+          "case": "pin5-length300",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 21600,
+            "complete_channel_frames": 3,
+            "complete_bursts": 0,
+            "complete_frame_bits": 21600,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.017817728
+        },
+        {
+          "case": "full-000000",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 432000,
+            "complete_channel_frames": 60,
+            "complete_bursts": 0,
+            "complete_frame_bits": 432000,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.437248128
+        },
+        {
+          "case": "full-FFFFFF",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 432000,
+            "complete_channel_frames": 60,
+            "complete_bursts": 0,
+            "complete_frame_bits": 432000,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.476395008
+        },
+        {
+          "case": "full-AAAAAA",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 432000,
+            "complete_channel_frames": 60,
+            "complete_bursts": 0,
+            "complete_frame_bits": 432000,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.392508928
+        },
+        {
+          "case": "full-555555",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 432000,
+            "complete_channel_frames": 60,
+            "complete_bursts": 0,
+            "complete_frame_bits": 432000,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.392508928
+        },
+        {
+          "case": "full-123456",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 432000,
+            "complete_channel_frames": 60,
+            "complete_bursts": 0,
+            "complete_frame_bits": 432000,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.375731712
+        },
+        {
+          "case": "bank2-1-2-3",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 432,
+            "complete_channel_frames": 9,
+            "complete_bursts": 0,
+            "complete_frame_bits": 432,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 0.96748608
+        },
+        {
+          "case": "bank2-1-3-2",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 432,
+            "complete_channel_frames": 9,
+            "complete_bursts": 0,
+            "complete_frame_bits": 432,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.05137216
+        },
+        {
+          "case": "bank2-2-1-3",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 432,
+            "complete_channel_frames": 9,
+            "complete_bursts": 0,
+            "complete_frame_bits": 432,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 0.961893696
+        },
+        {
+          "case": "bank2-2-3-1",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 432,
+            "complete_channel_frames": 9,
+            "complete_bursts": 0,
+            "complete_frame_bits": 432,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.00663296
+        },
+        {
+          "case": "bank2-3-1-2",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 432,
+            "complete_channel_frames": 9,
+            "complete_bursts": 0,
+            "complete_frame_bits": 432,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.00663296
+        },
+        {
+          "case": "bank2-3-2-1",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 432,
+            "complete_channel_frames": 9,
+            "complete_bursts": 0,
+            "complete_frame_bits": 432,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.00663296
+        },
+        {
+          "case": "bank2-tie-1-1-3",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 360,
+            "complete_channel_frames": 9,
+            "complete_bursts": 0,
+            "complete_frame_bits": 360,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.001040512
+        },
+        {
+          "case": "bank2-tie-1-3-3",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 504,
+            "complete_channel_frames": 9,
+            "complete_bursts": 0,
+            "complete_frame_bits": 504,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 0.961893696
+        },
+        {
+          "case": "bank2-long-unequal",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 34632,
+            "complete_channel_frames": 9,
+            "complete_bursts": 0,
+            "complete_frame_bits": 34632,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.045779776
+        },
+        {
+          "case": "bank1-1-2",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 216,
+            "complete_channel_frames": 6,
+            "complete_bursts": 0,
+            "complete_frame_bits": 216,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 0.961893696
+        },
+        {
+          "case": "bank1-2-1",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 216,
+            "complete_channel_frames": 6,
+            "complete_bursts": 0,
+            "complete_frame_bits": 216,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.124073472
+        },
+        {
+          "case": "bank1-1-1",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 144,
+            "complete_channel_frames": 6,
+            "complete_bursts": 0,
+            "complete_frame_bits": 144,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 0.984263296
+        },
+        {
+          "case": "bank1-1-300",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 21672,
+            "complete_channel_frames": 6,
+            "complete_bursts": 0,
+            "complete_frame_bits": 21672,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.023410176
+        },
+        {
+          "case": "bank1-300-1",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 21672,
+            "complete_channel_frames": 6,
+            "complete_bursts": 0,
+            "complete_frame_bits": 21672,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 0.96748608
+        },
+        {
+          "case": "longest-bank-pin0",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 21960,
+            "complete_channel_frames": 18,
+            "complete_bursts": 0,
+            "complete_frame_bits": 21960,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.068149376
+        },
+        {
+          "case": "longest-bank-pin2",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 21960,
+            "complete_channel_frames": 18,
+            "complete_bursts": 0,
+            "complete_frame_bits": 21960,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.129665856
+        },
+        {
+          "case": "longest-bank-pin3",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 21960,
+            "complete_channel_frames": 18,
+            "complete_bursts": 0,
+            "complete_frame_bits": 21960,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.023410176
+        },
+        {
+          "case": "enable-mask-01",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 72,
+            "complete_channel_frames": 3,
+            "complete_bursts": 0,
+            "complete_frame_bits": 72,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 0.984263296
+        },
+        {
+          "case": "enable-mask-02",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 72,
+            "complete_channel_frames": 3,
+            "complete_bursts": 0,
+            "complete_frame_bits": 72,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.001040512
+        },
+        {
+          "case": "enable-mask-03",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 144,
+            "complete_channel_frames": 6,
+            "complete_bursts": 0,
+            "complete_frame_bits": 144,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 0.94511648
+        },
+        {
+          "case": "enable-mask-04",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 72,
+            "complete_channel_frames": 3,
+            "complete_bursts": 0,
+            "complete_frame_bits": 72,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.185589888
+        },
+        {
+          "case": "enable-mask-05",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 144,
+            "complete_channel_frames": 6,
+            "complete_bursts": 0,
+            "complete_frame_bits": 144,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 0.96748608
+        },
+        {
+          "case": "enable-mask-06",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 144,
+            "complete_channel_frames": 6,
+            "complete_bursts": 0,
+            "complete_frame_bits": 144,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.001040512
+        },
+        {
+          "case": "enable-mask-07",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 216,
+            "complete_channel_frames": 9,
+            "complete_bursts": 0,
+            "complete_frame_bits": 216,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 0.961893696
+        },
+        {
+          "case": "enable-mask-08",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 72,
+            "complete_channel_frames": 3,
+            "complete_bursts": 0,
+            "complete_frame_bits": 72,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.012225344
+        },
+        {
+          "case": "enable-mask-09",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 144,
+            "complete_channel_frames": 6,
+            "complete_bursts": 0,
+            "complete_frame_bits": 144,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.00663296
+        },
+        {
+          "case": "enable-mask-10",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 144,
+            "complete_channel_frames": 6,
+            "complete_bursts": 0,
+            "complete_frame_bits": 144,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 0.96748608
+        },
+        {
+          "case": "enable-mask-11",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 216,
+            "complete_channel_frames": 9,
+            "complete_bursts": 0,
+            "complete_frame_bits": 216,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.00663296
+        },
+        {
+          "case": "enable-mask-12",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 144,
+            "complete_channel_frames": 6,
+            "complete_bursts": 0,
+            "complete_frame_bits": 144,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 0.984263296
+        },
+        {
+          "case": "enable-mask-13",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 216,
+            "complete_channel_frames": 9,
+            "complete_bursts": 0,
+            "complete_frame_bits": 216,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 0.984263296
+        },
+        {
+          "case": "enable-mask-14",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 216,
+            "complete_channel_frames": 9,
+            "complete_bursts": 0,
+            "complete_frame_bits": 216,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.00663296
+        },
+        {
+          "case": "enable-mask-15",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 288,
+            "complete_channel_frames": 12,
+            "complete_bursts": 0,
+            "complete_frame_bits": 288,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.001040512
+        },
+        {
+          "case": "enable-mask-16",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 72,
+            "complete_channel_frames": 3,
+            "complete_bursts": 0,
+            "complete_frame_bits": 72,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 0.984263296
+        },
+        {
+          "case": "enable-mask-17",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 144,
+            "complete_channel_frames": 6,
+            "complete_bursts": 0,
+            "complete_frame_bits": 144,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 0.939524096
+        },
+        {
+          "case": "enable-mask-18",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 144,
+            "complete_channel_frames": 6,
+            "complete_bursts": 0,
+            "complete_frame_bits": 144,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.001040512
+        },
+        {
+          "case": "enable-mask-19",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 216,
+            "complete_channel_frames": 9,
+            "complete_bursts": 0,
+            "complete_frame_bits": 216,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.001040512
+        },
+        {
+          "case": "enable-mask-20",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 144,
+            "complete_channel_frames": 6,
+            "complete_bursts": 0,
+            "complete_frame_bits": 144,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 0.984263296
+        },
+        {
+          "case": "enable-mask-21",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 216,
+            "complete_channel_frames": 9,
+            "complete_bursts": 0,
+            "complete_frame_bits": 216,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 0.984263296
+        },
+        {
+          "case": "enable-mask-22",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 216,
+            "complete_channel_frames": 9,
+            "complete_bursts": 0,
+            "complete_frame_bits": 216,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.00663296
+        },
+        {
+          "case": "enable-mask-23",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 288,
+            "complete_channel_frames": 12,
+            "complete_bursts": 0,
+            "complete_frame_bits": 288,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.00663296
+        },
+        {
+          "case": "enable-mask-24",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 144,
+            "complete_channel_frames": 6,
+            "complete_bursts": 0,
+            "complete_frame_bits": 144,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.00663296
+        },
+        {
+          "case": "enable-mask-25",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 216,
+            "complete_channel_frames": 9,
+            "complete_bursts": 0,
+            "complete_frame_bits": 216,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 0.94511648
+        },
+        {
+          "case": "enable-mask-26",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 216,
+            "complete_channel_frames": 9,
+            "complete_bursts": 0,
+            "complete_frame_bits": 216,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.00663296
+        },
+        {
+          "case": "enable-mask-27",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 288,
+            "complete_channel_frames": 12,
+            "complete_bursts": 0,
+            "complete_frame_bits": 288,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 0.939524096
+        },
+        {
+          "case": "enable-mask-28",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 216,
+            "complete_channel_frames": 9,
+            "complete_bursts": 0,
+            "complete_frame_bits": 216,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.001040512
+        },
+        {
+          "case": "enable-mask-29",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 288,
+            "complete_channel_frames": 12,
+            "complete_bursts": 0,
+            "complete_frame_bits": 288,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 0.94511648
+        },
+        {
+          "case": "enable-mask-30",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 288,
+            "complete_channel_frames": 12,
+            "complete_bursts": 0,
+            "complete_frame_bits": 288,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.001040512
+        },
+        {
+          "case": "enable-mask-31",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 360,
+            "complete_channel_frames": 15,
+            "complete_bursts": 0,
+            "complete_frame_bits": 360,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.05137216
+        },
+        {
+          "case": "enable-mask-32",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 72,
+            "complete_channel_frames": 3,
+            "complete_bursts": 0,
+            "complete_frame_bits": 72,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 0.96748608
+        },
+        {
+          "case": "enable-mask-33",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 144,
+            "complete_channel_frames": 6,
+            "complete_bursts": 0,
+            "complete_frame_bits": 144,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.00663296
+        },
+        {
+          "case": "enable-mask-34",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 144,
+            "complete_channel_frames": 6,
+            "complete_bursts": 0,
+            "complete_frame_bits": 144,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 0.96748608
+        },
+        {
+          "case": "enable-mask-35",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 216,
+            "complete_channel_frames": 9,
+            "complete_bursts": 0,
+            "complete_frame_bits": 216,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.001040512
+        },
+        {
+          "case": "enable-mask-36",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 144,
+            "complete_channel_frames": 6,
+            "complete_bursts": 0,
+            "complete_frame_bits": 144,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 0.94511648
+        },
+        {
+          "case": "enable-mask-37",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 216,
+            "complete_channel_frames": 9,
+            "complete_bursts": 0,
+            "complete_frame_bits": 216,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.023410176
+        },
+        {
+          "case": "enable-mask-38",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 216,
+            "complete_channel_frames": 9,
+            "complete_bursts": 0,
+            "complete_frame_bits": 216,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 0.961893696
+        },
+        {
+          "case": "enable-mask-39",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 288,
+            "complete_channel_frames": 12,
+            "complete_bursts": 0,
+            "complete_frame_bits": 288,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.023410176
+        },
+        {
+          "case": "enable-mask-40",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 144,
+            "complete_channel_frames": 6,
+            "complete_bursts": 0,
+            "complete_frame_bits": 144,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.00663296
+        },
+        {
+          "case": "enable-mask-41",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 216,
+            "complete_channel_frames": 9,
+            "complete_bursts": 0,
+            "complete_frame_bits": 216,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.00663296
+        },
+        {
+          "case": "enable-mask-42",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 216,
+            "complete_channel_frames": 9,
+            "complete_bursts": 0,
+            "complete_frame_bits": 216,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.00663296
+        },
+        {
+          "case": "enable-mask-43",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 288,
+            "complete_channel_frames": 12,
+            "complete_bursts": 0,
+            "complete_frame_bits": 288,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 0.96748608
+        },
+        {
+          "case": "enable-mask-44",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 216,
+            "complete_channel_frames": 9,
+            "complete_bursts": 0,
+            "complete_frame_bits": 216,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.02900256
+        },
+        {
+          "case": "enable-mask-45",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 288,
+            "complete_channel_frames": 12,
+            "complete_bursts": 0,
+            "complete_frame_bits": 288,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.023410176
+        },
+        {
+          "case": "enable-mask-46",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 288,
+            "complete_channel_frames": 12,
+            "complete_bursts": 0,
+            "complete_frame_bits": 288,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 0.984263296
+        },
+        {
+          "case": "enable-mask-47",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 360,
+            "complete_channel_frames": 15,
+            "complete_bursts": 0,
+            "complete_frame_bits": 360,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 0.94511648
+        },
+        {
+          "case": "enable-mask-48",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 144,
+            "complete_channel_frames": 6,
+            "complete_bursts": 0,
+            "complete_frame_bits": 144,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.023410176
+        },
+        {
+          "case": "enable-mask-49",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 216,
+            "complete_channel_frames": 9,
+            "complete_bursts": 0,
+            "complete_frame_bits": 216,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.045779776
+        },
+        {
+          "case": "enable-mask-50",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 216,
+            "complete_channel_frames": 9,
+            "complete_bursts": 0,
+            "complete_frame_bits": 216,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 0.984263296
+        },
+        {
+          "case": "enable-mask-51",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 288,
+            "complete_channel_frames": 12,
+            "complete_bursts": 0,
+            "complete_frame_bits": 288,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.00663296
+        },
+        {
+          "case": "enable-mask-52",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 216,
+            "complete_channel_frames": 9,
+            "complete_bursts": 0,
+            "complete_frame_bits": 216,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.00663296
+        },
+        {
+          "case": "enable-mask-53",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 288,
+            "complete_channel_frames": 12,
+            "complete_bursts": 0,
+            "complete_frame_bits": 288,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 0.984263296
+        },
+        {
+          "case": "enable-mask-54",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 288,
+            "complete_channel_frames": 12,
+            "complete_bursts": 0,
+            "complete_frame_bits": 288,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.00663296
+        },
+        {
+          "case": "enable-mask-55",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 360,
+            "complete_channel_frames": 15,
+            "complete_bursts": 0,
+            "complete_frame_bits": 360,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 0.94511648
+        },
+        {
+          "case": "enable-mask-56",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 216,
+            "complete_channel_frames": 9,
+            "complete_bursts": 0,
+            "complete_frame_bits": 216,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.001040512
+        },
+        {
+          "case": "enable-mask-57",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 288,
+            "complete_channel_frames": 12,
+            "complete_bursts": 0,
+            "complete_frame_bits": 288,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.023410176
+        },
+        {
+          "case": "enable-mask-58",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 288,
+            "complete_channel_frames": 12,
+            "complete_bursts": 0,
+            "complete_frame_bits": 288,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.012225344
+        },
+        {
+          "case": "enable-mask-59",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 360,
+            "complete_channel_frames": 15,
+            "complete_bursts": 0,
+            "complete_frame_bits": 360,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 0.984263296
+        },
+        {
+          "case": "enable-mask-60",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 288,
+            "complete_channel_frames": 12,
+            "complete_bursts": 0,
+            "complete_frame_bits": 288,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.00663296
+        },
+        {
+          "case": "enable-mask-61",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 360,
+            "complete_channel_frames": 15,
+            "complete_bursts": 0,
+            "complete_frame_bits": 360,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.012225344
+        },
+        {
+          "case": "enable-mask-62",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 360,
+            "complete_channel_frames": 15,
+            "complete_bursts": 0,
+            "complete_frame_bits": 360,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.040187392
+        },
+        {
+          "case": "enable-mask-63",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 432,
+            "complete_channel_frames": 18,
+            "complete_bursts": 0,
+            "complete_frame_bits": 432,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.017817728
+        },
+        {
+          "case": "counter-pin0-length2",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 144,
+            "complete_channel_frames": 3,
+            "complete_bursts": 0,
+            "complete_frame_bits": 144,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 0.973078528
+        },
+        {
+          "case": "counter-pin0-length3",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 216,
+            "complete_channel_frames": 3,
+            "complete_bursts": 0,
+            "complete_frame_bits": 216,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.012225344
+        },
+        {
+          "case": "counter-pin0-length255",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 18360,
+            "complete_channel_frames": 3,
+            "complete_bursts": 0,
+            "complete_frame_bits": 18360,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.0737418240000003
+        },
+        {
+          "case": "counter-pin0-length256",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 18432,
+            "complete_channel_frames": 3,
+            "complete_bursts": 0,
+            "complete_frame_bits": 18432,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.045779776
+        },
+        {
+          "case": "counter-pin0-length299",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 21528,
+            "complete_channel_frames": 3,
+            "complete_bursts": 0,
+            "complete_frame_bits": 21528,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 0.984263296
+        },
+        {
+          "case": "counter-pin2-length2",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 144,
+            "complete_channel_frames": 3,
+            "complete_bursts": 0,
+            "complete_frame_bits": 144,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.012225344
+        },
+        {
+          "case": "counter-pin2-length3",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 216,
+            "complete_channel_frames": 3,
+            "complete_bursts": 0,
+            "complete_frame_bits": 216,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.001040512
+        },
+        {
+          "case": "counter-pin2-length255",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 18360,
+            "complete_channel_frames": 3,
+            "complete_bursts": 0,
+            "complete_frame_bits": 18360,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 0.984263296
+        },
+        {
+          "case": "counter-pin2-length256",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 18432,
+            "complete_channel_frames": 3,
+            "complete_bursts": 0,
+            "complete_frame_bits": 18432,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.045779776
+        },
+        {
+          "case": "counter-pin2-length299",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 21528,
+            "complete_channel_frames": 3,
+            "complete_bursts": 0,
+            "complete_frame_bits": 21528,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 0.984263296
+        },
+        {
+          "case": "counter-pin3-length2",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 144,
+            "complete_channel_frames": 3,
+            "complete_bursts": 0,
+            "complete_frame_bits": 144,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.00663296
+        },
+        {
+          "case": "counter-pin3-length3",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 216,
+            "complete_channel_frames": 3,
+            "complete_bursts": 0,
+            "complete_frame_bits": 216,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.00663296
+        },
+        {
+          "case": "counter-pin3-length255",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 18360,
+            "complete_channel_frames": 3,
+            "complete_bursts": 0,
+            "complete_frame_bits": 18360,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.02900256
+        },
+        {
+          "case": "counter-pin3-length256",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 18432,
+            "complete_channel_frames": 3,
+            "complete_bursts": 0,
+            "complete_frame_bits": 18432,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.02900256
+        },
+        {
+          "case": "counter-pin3-length299",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 21528,
+            "complete_channel_frames": 3,
+            "complete_bursts": 0,
+            "complete_frame_bits": 21528,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 0.989855744
+        },
+        {
+          "case": "profile-ws2812b-FF0000",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 1296,
+            "complete_channel_frames": 18,
+            "complete_bursts": 0,
+            "complete_frame_bits": 1296,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.00663296
+        },
+        {
+          "case": "profile-ws2812b-00FF00",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 1296,
+            "complete_channel_frames": 18,
+            "complete_bursts": 0,
+            "complete_frame_bits": 1296,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.00663296
+        },
+        {
+          "case": "profile-ws2812b-0000FF",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 1296,
+            "complete_channel_frames": 18,
+            "complete_bursts": 0,
+            "complete_frame_bits": 1296,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.00663296
+        },
+        {
+          "case": "profile-ws2812b-123456",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 1296,
+            "complete_channel_frames": 18,
+            "complete_bursts": 0,
+            "complete_frame_bits": 1296,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 0.989855744
+        },
+        {
+          "case": "profile-ws2811-hs-FF0000",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 1296,
+            "complete_channel_frames": 18,
+            "complete_bursts": 0,
+            "complete_frame_bits": 1296,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.05137216
+        },
+        {
+          "case": "profile-ws2811-hs-00FF00",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 1296,
+            "complete_channel_frames": 18,
+            "complete_bursts": 0,
+            "complete_frame_bits": 1296,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.001040512
+        },
+        {
+          "case": "profile-ws2811-hs-0000FF",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 1296,
+            "complete_channel_frames": 18,
+            "complete_bursts": 0,
+            "complete_frame_bits": 1296,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.00663296
+        },
+        {
+          "case": "profile-ws2811-hs-123456",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 1296,
+            "complete_channel_frames": 18,
+            "complete_bursts": 0,
+            "complete_frame_bits": 1296,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 0.96748608
+        },
+        {
+          "case": "profile-ws2812b-bgr-FF0000",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 1296,
+            "complete_channel_frames": 18,
+            "complete_bursts": 0,
+            "complete_frame_bits": 1296,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.017817728
+        },
+        {
+          "case": "profile-ws2812b-bgr-00FF00",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 1296,
+            "complete_channel_frames": 18,
+            "complete_bursts": 0,
+            "complete_frame_bits": 1296,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.00663296
+        },
+        {
+          "case": "profile-ws2812b-bgr-0000FF",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 1296,
+            "complete_channel_frames": 18,
+            "complete_bursts": 0,
+            "complete_frame_bits": 1296,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.00663296
+        },
+        {
+          "case": "profile-ws2812b-bgr-123456",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 1296,
+            "complete_channel_frames": 18,
+            "complete_bursts": 0,
+            "complete_frame_bits": 1296,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.02900256
+        },
+        {
+          "case": "profile-ws2811-hs-bgr-FF0000",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 1296,
+            "complete_channel_frames": 18,
+            "complete_bursts": 0,
+            "complete_frame_bits": 1296,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.00663296
+        },
+        {
+          "case": "profile-ws2811-hs-bgr-00FF00",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 1296,
+            "complete_channel_frames": 18,
+            "complete_bursts": 0,
+            "complete_frame_bits": 1296,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.001040512
+        },
+        {
+          "case": "profile-ws2811-hs-bgr-0000FF",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 1296,
+            "complete_channel_frames": 18,
+            "complete_bursts": 0,
+            "complete_frame_bits": 1296,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 1.02900256
+        },
+        {
+          "case": "profile-ws2811-hs-bgr-123456",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 1296,
+            "complete_channel_frames": 18,
+            "complete_bursts": 0,
+            "complete_frame_bits": 1296,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 0.961893696
+        }
+      ],
+      "updated_utc": "2026-09-06T04:49:17.935738+00:00",
+      "started_utc": "2026-09-06T04:43:30.494849+00:00"
+    },
+    "protected-final-smoke": {
+      "status": "pass",
+      "completed": [
+        {
+          "case": "disabled",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 0,
+            "complete_channel_frames": 0,
+            "complete_bursts": 0,
+            "complete_frame_bits": 0,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 3.254779904
+        },
+        {
+          "case": "one-black",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 432,
+            "complete_channel_frames": 18,
+            "complete_bursts": 0,
+            "complete_frame_bits": 432,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 3.31629632
+        },
+        {
+          "case": "one-white",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 432,
+            "complete_channel_frames": 18,
+            "complete_bursts": 0,
+            "complete_frame_bits": 432,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 3.388997632
+        },
+        {
+          "case": "full-black",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 432000,
+            "complete_channel_frames": 60,
+            "complete_bursts": 0,
+            "complete_frame_bits": 432000,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 4.859800192
+        },
+        {
+          "case": "full-white",
+          "status": "pass",
+          "coverage": {
+            "complete_pulses": 432000,
+            "complete_channel_frames": 60,
+            "complete_bursts": 0,
+            "complete_frame_bits": 432000,
+            "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+          },
+          "duration_s": 4.619326784
+        }
+      ],
+      "updated_utc": "2026-09-06T05:14:22.890497+00:00",
+      "started_utc": "2026-09-06T05:13:53.220646+00:00"
+    },
+    "protected-loaded-001": {
+      "status": "pass",
+      "captured_seconds": 539.6000053119999,
+      "checked_seconds": 539.6000053119999,
+      "validated_seconds": 539.6000053119999,
+      "chunks": 21,
+      "complete_pulses": 137101949,
+      "complete_channel_frames": 19037,
+      "violation_count": 0,
+      "violation_counts": {},
+      "updated_utc": "2026-09-06T05:08:45.323632+00:00",
+      "started_utc": "2026-09-06T04:57:27.925590+00:00",
+      "finished_utc": "2026-09-06T05:08:45.323632+00:00",
+      "phases": [
+        {
+          "status": "pass",
+          "captured_seconds": 66.124600576,
+          "checked_seconds": 66.124600576,
+          "validated_seconds": 66.124600576,
+          "chunks": 3,
+          "complete_pulses": 18601090,
+          "complete_channel_frames": 2582,
+          "violation_count": 0,
+          "violation_counts": {},
+          "started_utc": "2026-09-06T04:57:28.050105+00:00",
+          "finished_utc": "2026-09-06T04:59:03.152796+00:00",
+          "name": "cycle",
+          "successful_sends": 618,
+          "sender_exit": 0,
+          "cleanup_errors": [],
+          "parameters": {
+            "color": "000000",
+            "duration": 90,
+            "lengths": [
+              300,
+              300,
+              300,
+              300,
+              300,
+              300
+            ],
+            "load": "none",
+            "mode": "cycle",
+            "name": "cycle",
+            "profile": "ws2812b",
+            "seed": 87654321
+          }
+        },
+        {
+          "status": "pass",
+          "captured_seconds": 79.08779616,
+          "checked_seconds": 79.08779616,
+          "validated_seconds": 79.08779616,
+          "chunks": 3,
+          "complete_pulses": 22391986,
+          "complete_channel_frames": 3109,
+          "violation_count": 0,
+          "violation_counts": {},
+          "started_utc": "2026-09-06T04:59:03.350714+00:00",
+          "finished_utc": "2026-09-06T05:00:39.038346+00:00",
+          "name": "random",
+          "successful_sends": 621,
+          "sender_exit": 0,
+          "cleanup_errors": [],
+          "parameters": {
+            "color": "000000",
+            "duration": 90,
+            "lengths": [
+              300,
+              300,
+              300,
+              300,
+              300,
+              300
+            ],
+            "load": "none",
+            "mode": "random",
+            "name": "random",
+            "profile": "ws2812b",
+            "seed": 87654321
+          }
+        },
+        {
+          "status": "pass",
+          "captured_seconds": 80.877365888,
+          "checked_seconds": 80.877365888,
+          "validated_seconds": 80.877365888,
+          "chunks": 3,
+          "complete_pulses": 17881417,
+          "complete_channel_frames": 2483,
+          "violation_count": 0,
+          "violation_counts": {},
+          "started_utc": "2026-09-06T05:00:39.177298+00:00",
+          "finished_utc": "2026-09-06T05:02:16.887113+00:00",
+          "name": "zero-ddr",
+          "successful_sends": 482,
+          "sender_exit": 0,
+          "cleanup_errors": [],
+          "parameters": {
+            "color": "000000",
+            "duration": 90,
+            "lengths": [
+              300,
+              300,
+              300,
+              300,
+              300,
+              300
+            ],
+            "load": "ddr",
+            "mode": "fixed",
+            "name": "zero-ddr",
+            "profile": "ws2812b",
+            "seed": 87654321
+          }
+        },
+        {
+          "status": "pass",
+          "captured_seconds": 81.358312704,
+          "checked_seconds": 81.358312704,
+          "validated_seconds": 81.358312704,
+          "chunks": 3,
+          "complete_pulses": 17922555,
+          "complete_channel_frames": 2489,
+          "violation_count": 0,
+          "violation_counts": {},
+          "started_utc": "2026-09-06T05:02:17.020392+00:00",
+          "finished_utc": "2026-09-06T05:03:54.928237+00:00",
+          "name": "one-ddr",
+          "successful_sends": 481,
+          "sender_exit": 0,
+          "cleanup_errors": [],
+          "parameters": {
+            "color": "FFFFFF",
+            "duration": 90,
+            "lengths": [
+              300,
+              300,
+              300,
+              300,
+              300,
+              300
+            ],
+            "load": "ddr",
+            "mode": "fixed",
+            "name": "one-ddr",
+            "profile": "ws2812b",
+            "seed": 87654321
+          }
+        },
+        {
+          "status": "pass",
+          "captured_seconds": 72.589421184,
+          "checked_seconds": 72.589421184,
+          "validated_seconds": 72.589421184,
+          "chunks": 3,
+          "complete_pulses": 15962400,
+          "complete_channel_frames": 2217,
+          "violation_count": 0,
+          "violation_counts": {},
+          "started_utc": "2026-09-06T05:03:55.130746+00:00",
+          "finished_utc": "2026-09-06T05:05:33.784504+00:00",
+          "name": "cycle-cpu",
+          "successful_sends": 491,
+          "sender_exit": 0,
+          "cleanup_errors": [],
+          "parameters": {
+            "color": "000000",
+            "duration": 90,
+            "lengths": [
+              300,
+              300,
+              300,
+              300,
+              300,
+              300
+            ],
+            "load": "cpu",
+            "mode": "cycle",
+            "name": "cycle-cpu",
+            "profile": "ws2812b",
+            "seed": 87654321
+          }
+        },
+        {
+          "status": "pass",
+          "captured_seconds": 79.86514048000001,
+          "checked_seconds": 79.86514048000001,
+          "validated_seconds": 79.86514048000001,
+          "chunks": 3,
+          "complete_pulses": 22200660,
+          "complete_channel_frames": 3083,
+          "violation_count": 0,
+          "violation_counts": {},
+          "started_utc": "2026-09-06T05:05:33.923645+00:00",
+          "finished_utc": "2026-09-06T05:07:09.492391+00:00",
+          "name": "zero-ethernet",
+          "successful_sends": 610,
+          "sender_exit": 0,
+          "cleanup_errors": [],
+          "parameters": {
+            "color": "000000",
+            "duration": 90,
+            "lengths": [
+              300,
+              300,
+              300,
+              300,
+              300,
+              300
+            ],
+            "load": "ethernet",
+            "mode": "fixed",
+            "name": "zero-ethernet",
+            "profile": "ws2812b",
+            "seed": 87654321
+          }
+        },
+        {
+          "status": "pass",
+          "captured_seconds": 79.69736832,
+          "checked_seconds": 79.69736832,
+          "validated_seconds": 79.69736832,
+          "chunks": 3,
+          "complete_pulses": 22141841,
+          "complete_channel_frames": 3074,
+          "violation_count": 0,
+          "violation_counts": {},
+          "started_utc": "2026-09-06T05:07:09.632654+00:00",
+          "finished_utc": "2026-09-06T05:08:45.223925+00:00",
+          "name": "one-ethernet",
+          "successful_sends": 610,
+          "sender_exit": 0,
+          "cleanup_errors": [],
+          "parameters": {
+            "color": "FFFFFF",
+            "duration": 90,
+            "lengths": [
+              300,
+              300,
+              300,
+              300,
+              300,
+              300
+            ],
+            "load": "ethernet",
+            "mode": "fixed",
+            "name": "one-ethernet",
+            "profile": "ws2812b",
+            "seed": 87654321
+          }
+        }
+      ]
+    },
+    "signals_and_matrix": {
+      "reviewed_utc": "2026-09-06T04:58:44.861187+00:00",
+      "status": "PASS",
+      "signals": {
+        "analysis_sha256": "a8ef0a4f1e4bd3575487488492304e2ed8ff328555a73cd78518b5d8875d0d45",
+        "duration_s": 12.12433472,
+        "color": "000000",
+        "lengths": [
+          300,
+          300,
+          300,
+          300,
+          300,
+          300
+        ],
+        "frames_per_channel": [
+          4,
+          4,
+          4,
+          4,
+          4,
+          4
+        ],
+        "coverage": {
+          "complete_pulses": 172800,
+          "complete_channel_frames": 24,
+          "complete_bursts": 0,
+          "complete_frame_bits": 172800,
+          "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+        },
+        "complete_panel_cycles": 4,
+        "partial_frames": 0,
+        "partial_highs": 0,
+        "violations": 0
+      },
+      "matrix": {
+        "capture_count": 129,
+        "passed": 129,
+        "duration_s": 131.83536064,
+        "complete_pulses": 2648520,
+        "complete_channel_frames": 1410,
+        "complete_frame_bits": 2648520,
+        "partial_frames": 0,
+        "partial_highs": 0,
+        "violations": 0,
+        "expected_frame_counts_verified": true,
+        "checker_sha256": [
+          "0a5d60a7a8bcf3076fdf4765d79c72b76e893c0726afb8bec02d8bcaa1e8cced"
+        ]
+      },
+      "notes": [
+        "Only one primary analysis.json per unique capture directory is counted.",
+        "Capture evidence validates waveform/content/counts; process-signal and final mailbox assertions come from separate live harness logs."
+      ]
+    }
+  }
+}

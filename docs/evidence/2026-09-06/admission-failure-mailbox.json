@@ -1,0 +1,1 @@
+{"magic":1145848881,"abi_version":4,"profile_id":1,"string_lengths":[300,300,300,300,300,300],"wire_color":16777199,"request_seq":3934,"completion_seq":3934,"status":3,"error_detail":0,"pru_control":[32771,1],"bank_ready":0,"bank_grant":3,"bank_done":3,"accepted_seq":3934,"gpio_oe":[858763379,3456110591,4231790593],"gpio_dataout":[0,0,0],"gpio_led_masks":[67108864,20480,26]}

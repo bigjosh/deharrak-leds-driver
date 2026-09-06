@@ -1,0 +1,4 @@
+spin iterations=100000 conservative_min_ns=100000 observed_min_ns=200875 observed_max_ns=331459 samples=7
+spin iterations=1000000 conservative_min_ns=1000000 observed_min_ns=2013625 observed_max_ns=2100000 samples=7
+spin iterations=28219000 conservative_min_ns=28219000 observed_min_ns=56999292 observed_max_ns=57213625 samples=7
+PASS observed spin bounds; this benchmark does not prove absence of preemption or worst-case GPIO latency.

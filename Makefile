@@ -1,0 +1,86 @@
+CC = gcc
+PYTHON = python3
+CPPFLAGS += -Iinclude -Isrc -D_POSIX_C_SOURCE=200809L
+ifdef LOCK_PATH
+CPPFLAGS += -DDLD_LOCK_PATH='"$(LOCK_PATH)"'
+endif
+CFLAGS = -std=c99 -O2 -Wall -Wextra -Werror -mcpu=cortex-a8 -marm -mfpu=neon -mfloat-abi=hard
+LDFLAGS += -Wl,-z,now
+LDLIBS += -lrt
+
+PASM_SOURCES = $(addprefix vendor/pasm/,pasm.c pasmpp.c pasmexp.c pasmop.c pasmdot.c pasmstruct.c pasmmacro.c)
+COMMON_OBJECTS = build/dld_common.o build/dld_hw.o
+
+.PHONY: all clean test test-native audit report kernel-module
+all: build/dld-init build/dld-send kernel-module
+
+KDIR ?= /lib/modules/$(shell uname -r)/build
+kernel-module:
+	$(MAKE) -C $(KDIR) M=$(CURDIR)/kernel modules
+
+build:
+	mkdir -p build
+
+build/pasm: $(PASM_SOURCES) vendor/pasm/pasm.h vendor/pasm/pasmdbg.h vendor/pasm/pru_ins.h | build
+	$(CC) -std=c99 -O2 -D_UNIX_ -include strings.h -o $@ $(PASM_SOURCES)
+
+build/pru.bin: pru/ws2812_uniform.p include/dld_abi.h include/dld_profiles.h build/pasm
+	build/pasm -V3 -b -L -l pru/ws2812_uniform.p build/pru
+	$(PYTHON) tools/embed_pru.py build/pru.bin build/pru_blob.c
+
+build/pru_blob.c: build/pru.bin
+	@test -f $@ || $(PYTHON) tools/embed_pru.py build/pru.bin $@
+
+build/pru_blob.o: build/pru_blob.c include/dld_abi.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+
+build/%.o: src/%.c include/dld_abi.h include/dld_profiles.h include/dld_quiet.h src/dld_common.h src/dld_hw.h | build
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+
+build/dld_spin.o: src/dld_spin.S include/dld_abi.h | build
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+
+build/dld-init: build/dld_init.o $(COMMON_OBJECTS) build/pru_blob.o
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+
+build/dld-send: build/dld_send.o $(COMMON_OBJECTS)
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+
+build/test-common: tests/test_common.c build/dld_common.o build/dld_spin.o
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+
+build/test-send-syscall: tests/test_send_syscall.c src/dld_send.c build/dld_common.o include/dld_quiet.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ tests/test_send_syscall.c build/dld_common.o $(LDLIBS)
+
+build/test-admission: tests/test_admission.c kernel/dld_admission.h | build
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ tests/test_admission.c $(LDLIBS)
+
+build/bench-spin: tests/bench_spin.c build/dld_common.o build/dld_spin.o
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+
+build/hw-probe: tests/hw_probe.c build/dld_hw.o include/dld_abi.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ tests/hw_probe.c build/dld_hw.o $(LDLIBS)
+
+build/quiet-kernel-probe: tests/quiet_kernel_probe.c build/dld_hw.o include/dld_quiet.h include/dld_abi.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ tests/quiet_kernel_probe.c build/dld_hw.o $(LDLIBS)
+
+test-native: all build/test-common build/test-send-syscall build/test-admission
+	build/test-common
+	build/test-send-syscall
+	build/test-admission
+	sh tests/test_cli.sh "$(CURDIR)/build"
+
+audit: all
+	objdump -d build/dld-send > build/dld-send.dis
+	objdump -d build/dld-init > build/dld-init.dis
+	$(PYTHON) tests/pru_audit.py build/pru.bin build/pru.lst
+	$(MAKE) -C kernel audit
+
+test: test-native audit
+
+report: all
+	DLD_REPORT_CFLAGS='$(CFLAGS)' DLD_REPORT_LOCK='$(if $(LOCK_PATH),$(LOCK_PATH),/var/lock/dld.lock)' sh tools/build-report.sh > build/build-report.txt
+	cat build/build-report.txt
+
+clean:
+	rm -f build/*.o build/dld-init build/dld-send build/test-common build/test-send-syscall build/test-admission build/bench-spin build/hw-probe build/quiet-kernel-probe build/pasm build/pru.bin build/pru.txt build/pru.lst build/pru_blob.c build/*.dis build/build-report.txt

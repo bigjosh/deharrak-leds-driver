@@ -1,0 +1,115 @@
+{
+  "record_type": "derived summary",
+  "provenance": {
+    "sources": [
+      {
+        "archive_path": "build/bbg/final-native-validation.log",
+        "sha256": "fa8658d3b8021c3bd326f30f54704e39bc50724e457b563ce5016fe19f8564ba",
+        "bytes": 7715
+      },
+      {
+        "archive_path": "build/bbg/hardware-suite.log",
+        "sha256": "22a8cc9527c68c4a601508960925cb02e31628ab87898ae593d289f64e99e803",
+        "bytes": 587
+      },
+      {
+        "archive_path": "build/bbg/signal-suite.log",
+        "sha256": "a3f889d4e05d63f1977458cc64a322047d97c979abfe0a03376052e223790b81",
+        "bytes": 281
+      },
+      {
+        "archive_path": "build/bbg/handover-test.txt",
+        "sha256": "23927a26f68b96d3ad4c5b293fa3bfd775b61a303979e64e94e5ab7381cef664",
+        "bytes": 2063
+      }
+    ],
+    "extraction": "Verbatim historical ABI3 result lines; local host/build paths omitted.",
+    "numerical_policy": "Selected original values and text; no measurement values recomputed."
+  },
+  "data": {
+    "final-native-validation.log": [
+      {
+        "line": 2,
+        "text": "PASS common: 481 checks"
+      },
+      {
+        "line": 4,
+        "text": "PASS CLI rejection: 15 checks"
+      },
+      {
+        "line": 8,
+        "text": "PRU audit passed: 4308 bytes; 138 frames; exact lengths/masks/order; 70/140/240 cycles;"
+      },
+      {
+        "line": 13,
+        "text": "ARM audit PASS: aligned 28-byte STR/DMB/STR/DSB/SUBS/BNE/BX routine;"
+      }
+    ],
+    "hardware-suite.log": [
+      {
+        "line": 3,
+        "text": "PASS lifecycle: zero"
+      },
+      {
+        "line": 4,
+        "text": "PASS lifecycle: unequal"
+      },
+      {
+        "line": 5,
+        "text": "PASS lifecycle: maximum"
+      },
+      {
+        "line": 6,
+        "text": "PASS lifecycle: ws2811"
+      },
+      {
+        "line": 7,
+        "text": "PASS lifecycle: ws2812b-bgr"
+      },
+      {
+        "line": 8,
+        "text": "PASS lifecycle: ws2811-bgr"
+      },
+      {
+        "line": 9,
+        "text": "PASS malformed-input and lock rejection preserve state"
+      },
+      {
+        "line": 10,
+        "text": "PASS stopped READY/DONE causes critical cleanup and explicit recovery"
+      },
+      {
+        "line": 11,
+        "text": "PASS stopped outstanding requests stay busy without cleanup"
+      },
+      {
+        "line": 12,
+        "text": "PASS live hardware: 1390 checks, 136 commands; final configuration has six zero lengths"
+      }
+    ],
+    "signal-suite.log": [
+      {
+        "line": 2,
+        "text": "PASS SIGKILL: published request completed; next send succeeded without init"
+      },
+      {
+        "line": 3,
+        "text": "PASS SIGTERM: critical cleanup, invalidation, and explicit init recovery"
+      },
+      {
+        "line": 4,
+        "text": "PASS sender signals: 245 checks, 23 commands"
+      }
+    ],
+    "handover-test.txt": [
+      {
+        "line": 20,
+        "text": "PASS handover 1"
+      },
+      {
+        "line": 40,
+        "text": "PASS handover 2"
+      }
+    ]
+  }
+}

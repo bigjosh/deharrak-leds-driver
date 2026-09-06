@@ -1,0 +1,51 @@
+{
+  "record_type": "derived summary",
+  "provenance": {
+    "sources": [
+      {
+        "archive_path": "build/bench-20260906/handback-windows.json",
+        "sha256": "4f8c6365b310d29dd2febee9a0c90da13ac310b78fc3cdb9d35dd9c5e9d16e54",
+        "bytes": 1299
+      }
+    ],
+    "extraction": "Retains no-owned-worker observation, acquisition timestamps and stale export status; omits analyzer serial and application PID.",
+    "numerical_policy": "Selected original values and text; no measurement values recomputed."
+  },
+  "data": {
+    "checked_utc": "2026-09-06T13:12:27.9469226+00:00",
+    "owned_workers": [],
+    "note": "Final timed acquisition completed before STOP. The export worker was terminated during export bookkeeping; saved binary exports are independently checked. The finished Logic capture tab may remain open. No further BBG or Saleae operations are planned.",
+    "capture_metadata": {
+      "schema_version": 1,
+      "label": "zero-final",
+      "status": "exporting",
+      "requested_seconds": 30.0,
+      "sample_rate_hz": 500000000,
+      "digital_channels": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "analog_channels": [],
+      "glitch_filters": [],
+      "digital_voltage_setting": 3.3,
+      "nominal_threshold_volts": 1.65,
+      "pin_order": [
+        "P8_8",
+        "P8_10",
+        "P8_12",
+        "P8_14",
+        "P8_16",
+        "P8_18"
+      ],
+      "started_utc": "2026-09-06T09:09:44.549814-04:00",
+      "mode": "timed",
+      "capture_started_utc": "2026-09-06T09:09:45.165973-04:00",
+      "capture_finished_utc": "2026-09-06T09:10:15.560699-04:00"
+    },
+    "app_version": "2.4.46"
+  }
+}

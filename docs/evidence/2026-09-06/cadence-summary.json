@@ -1,0 +1,337 @@
+{
+  "record_type": "derived summary",
+  "provenance": {
+    "sources": [
+      {
+        "archive_path": "build/bench-20260906/protected-cadence-review.json",
+        "sha256": "e557e9bc749d6b20f2942dc2abdf6790a5748cfbccdb7f4ea046b4d466e76759",
+        "bytes": 10947
+      }
+    ],
+    "extraction": "Existing command/bank timing distributions only; unrelated user-session process details omitted.",
+    "numerical_policy": "Selected original values and text; no measurement values recomputed."
+  },
+  "data": {
+    "measurements": {
+      "protected-first-long/000-zero": {
+        "successful_sends": 1989,
+        "commands": {
+          "count": 1989,
+          "min_ms": 41.14699363708496,
+          "mean_ms": 43.39337157148282,
+          "quantile_ms": {
+            "p50": 41.44906997680664,
+            "p95": 62.27583885192871,
+            "p99": 83.03573608398438,
+            "max": 86.74216270446777
+          },
+          "sum_s": 86.30941605567932
+        },
+        "outside_command_gaps": {
+          "count": 1988,
+          "min_ms": 1.271963119506836,
+          "mean_ms": 1.584570412664586,
+          "quantile_ms": {
+            "p50": 1.6579627990722656,
+            "p95": 1.704597473144531,
+            "p99": 1.8628001213073715,
+            "max": 7.462978363037109
+          },
+          "sum_s": 3.1501259803771973
+        },
+        "command_start_intervals": {
+          "count": 1988,
+          "min_ms": 42.45185852050781,
+          "mean_ms": 44.95613675721934,
+          "quantile_ms": {
+            "p50": 43.01154613494873,
+            "p95": 63.58003616333007,
+            "p99": 84.54148054122922,
+            "max": 86.76910400390625
+          },
+          "sum_s": 89.37279987335205
+        },
+        "raw_bank_metrics": {
+          "bank2_duration": {
+            "count": 1329,
+            "min_ms": 8.710561999997424,
+            "mean_ms": 8.710570328066236,
+            "quantile_ms": {
+              "p50": 8.710568000001473,
+              "p95": 8.710577999998748,
+              "p99": 8.710578000000524,
+              "max": 8.71058000000069
+            },
+            "sum_s": 11.576347966000029
+          },
+          "bank1_duration": {
+            "count": 1329,
+            "min_ms": 8.710561999997424,
+            "mean_ms": 8.710570230248349,
+            "quantile_ms": {
+              "p50": 8.710572000000028,
+              "p95": 8.710576000002135,
+              "p99": 8.710578000000524,
+              "max": 8.71058000000069
+            },
+            "sum_s": 11.576347836000057
+          },
+          "bank0_duration": {
+            "count": 1329,
+            "min_ms": 8.710558000000646,
+            "mean_ms": 8.710570233258096,
+            "quantile_ms": {
+              "p50": 8.710568000001473,
+              "p95": 8.710577999998748,
+              "p99": 8.7105780000023,
+              "max": 8.710580000000023
+            },
+            "sum_s": 11.57634784000001
+          },
+          "gap_gpio2_to_gpio1": {
+            "count": 1329,
+            "min_ms": 0.5999700000014485,
+            "mean_ms": 1.1768747133182276,
+            "quantile_ms": {
+              "p50": 0.6602879999988431,
+              "p95": 2.626334000000163,
+              "p99": 12.795111679998572,
+              "max": 14.976385999999842
+            },
+            "sum_s": 1.5640664939999247
+          },
+          "gap_gpio1_to_gpio0": {
+            "count": 1329,
+            "min_ms": 0.5706240000002971,
+            "mean_ms": 1.0436723370955132,
+            "quantile_ms": {
+              "p50": 0.5915180000002351,
+              "p95": 2.174208000002407,
+              "p99": 12.16639575999885,
+              "max": 14.042719999999065
+            },
+            "sum_s": 1.3870405359999372
+          },
+          "panel_first_rise_to_last_fall": {
+            "count": 1329,
+            "min_ms": 27.30252399999955,
+            "mean_ms": 28.35225784198642,
+            "quantile_ms": {
+              "p50": 27.385539999999153,
+              "p95": 37.20364280000066,
+              "p99": 50.93056800000156,
+              "max": 52.34005999999525
+            },
+            "sum_s": 37.680150671999954
+          },
+          "outside_panel_to_next_panel": {
+            "count": 1327,
+            "min_ms": 15.358967999999917,
+            "mean_ms": 16.592580795779988,
+            "quantile_ms": {
+              "p50": 15.639171999999757,
+              "p95": 24.96154499999994,
+              "p99": 37.1576666800003,
+              "max": 39.51439799999967
+            },
+            "sum_s": 22.01835471600004
+          },
+          "panel_start_interval": {
+            "count": 1327,
+            "min_ms": 42.680891999999915,
+            "mean_ms": 44.94619510022608,
+            "quantile_ms": {
+              "p50": 43.00824399999925,
+              "p95": 59.08169920000021,
+              "p99": 78.2802688000005,
+              "max": 84.95310999999717
+            },
+            "sum_s": 59.643600898
+          }
+        },
+        "irq_off_mean_ms": [
+          9.26127481749623,
+          9.259031730517847,
+          9.258543169431874
+        ],
+        "chunks": [
+          {
+            "chunk": "protected-first-long\\000-zero\\chunk-0000",
+            "complete_three_bank_groups": 662,
+            "duration_s": 30.064771072
+          },
+          {
+            "chunk": "protected-first-long\\000-zero\\chunk-0001",
+            "complete_three_bank_groups": 667,
+            "duration_s": 30.025624192
+          }
+        ]
+      },
+      "protected-loaded-001/000-cycle": {
+        "successful_sends": 618,
+        "commands": {
+          "count": 618,
+          "min_ms": 41.57614707946777,
+          "mean_ms": 146.46465955814497,
+          "quantile_ms": {
+            "p50": 140.43045043945312,
+            "p95": 177.40604877471924,
+            "p99": 190.10499477386477,
+            "max": 222.14293479919434
+          },
+          "sum_s": 90.5151596069336
+        },
+        "outside_command_gaps": {
+          "count": 617,
+          "min_ms": 1.316070556640625,
+          "mean_ms": 1.6603087296941872,
+          "quantile_ms": {
+            "p50": 1.5740394592285156,
+            "p95": 1.7792701721191406,
+            "p99": 4.111089706420902,
+            "max": 20.669937133789062
+          },
+          "sum_s": 1.0244104862213135
+        },
+        "command_start_intervals": {
+          "count": 617,
+          "min_ms": 50.00805854797363,
+          "mean_ms": 148.05706316300305,
+          "quantile_ms": {
+            "p50": 142.03882217407227,
+            "p95": 178.93962860107422,
+            "p99": 191.5179443359375,
+            "max": 223.49905967712402
+          },
+          "sum_s": 91.35120797157288
+        },
+        "raw_bank_metrics": {
+          "bank2_duration": {
+            "count": 429,
+            "min_ms": 8.71056399999759,
+            "mean_ms": 8.710755808857868,
+            "quantile_ms": {
+              "p50": 8.710913999998127,
+              "p95": 8.710927999999285,
+              "p99": 8.710928000001061,
+              "max": 8.71092999999945
+            },
+            "sum_s": 3.736914242000026
+          },
+          "bank1_duration": {
+            "count": 429,
+            "min_ms": 8.710562000000976,
+            "mean_ms": 8.710755641025749,
+            "quantile_ms": {
+              "p50": 8.71091400000168,
+              "p95": 8.710927999999551,
+              "p99": 8.71092800000234,
+              "max": 8.710930000001227
+            },
+            "sum_s": 3.736914170000046
+          },
+          "bank0_duration": {
+            "count": 429,
+            "min_ms": 8.710561999997424,
+            "mean_ms": 8.710755645687575,
+            "quantile_ms": {
+              "p50": 8.71091400000168,
+              "p95": 8.710927999999951,
+              "p99": 8.71092999999977,
+              "max": 8.710931999999616
+            },
+            "sum_s": 3.7369141719999694
+          },
+          "gap_gpio2_to_gpio1": {
+            "count": 429,
+            "min_ms": 1.0193140000005485,
+            "mean_ms": 28.39706923076916,
+            "quantile_ms": {
+              "p50": 26.763022000000802,
+              "p95": 39.83498599999961,
+              "p99": 47.157167280000266,
+              "max": 50.56794200000003
+            },
+            "sum_s": 12.18234269999997
+          },
+          "gap_gpio1_to_gpio0": {
+            "count": 429,
+            "min_ms": 0.5874860000023574,
+            "mean_ms": 26.144856186480148,
+            "quantile_ms": {
+              "p50": 24.15033000000122,
+              "p95": 36.462215200000074,
+              "p99": 43.402594319999366,
+              "max": 47.29005399999764
+            },
+            "sum_s": 11.216143303999983
+          },
+          "panel_first_rise_to_last_fall": {
+            "count": 429,
+            "min_ms": 54.41543999999965,
+            "mean_ms": 80.6741925128205,
+            "quantile_ms": {
+              "p50": 77.2992600000002,
+              "p95": 101.68979719999989,
+              "p99": 111.46295471999993,
+              "max": 120.5051740000016
+            },
+            "sum_s": 34.60922858799999
+          },
+          "outside_panel_to_next_panel": {
+            "count": 426,
+            "min_ms": 57.68665400000117,
+            "mean_ms": 67.63104820187796,
+            "quantile_ms": {
+              "p50": 64.9142700000001,
+              "p95": 83.48972600000049,
+              "p99": 94.19320900000105,
+              "max": 99.59463400000068
+            },
+            "sum_s": 28.810826534000007
+          },
+          "panel_start_interval": {
+            "count": 426,
+            "min_ms": 114.98667999999768,
+            "mean_ms": 148.20367228638497,
+            "quantile_ms": {
+              "p50": 142.8571759999997,
+              "p95": 179.61424600000038,
+              "p99": 189.6240735000001,
+              "max": 200.5939320000003
+            },
+            "sum_s": 63.134764394
+          }
+        },
+        "irq_off_mean_ms": [
+          9.261385553398059,
+          9.262956561488673,
+          9.261702427184467
+        ],
+        "chunks": [
+          {
+            "chunk": "protected-loaded-001\\000-cycle\\chunk-0000",
+            "complete_three_bank_groups": 187,
+            "duration_s": 30.020031808
+          },
+          {
+            "chunk": "protected-loaded-001\\000-cycle\\chunk-0001",
+            "complete_three_bank_groups": 202,
+            "duration_s": 30.087140672
+          },
+          {
+            "chunk": "protected-loaded-001\\000-cycle\\chunk-0002",
+            "complete_three_bank_groups": 40,
+            "duration_s": 6.017428096
+          }
+        ]
+      }
+    },
+    "notes": [
+      "Success timestamps bracket Popen and communicate/result handling, not ioctl entry/exit.",
+      "Capture clocks are relative and not synchronized to board wall clock; summary distributions cannot split pre-first-edge vs post-last-edge time inside each command.",
+      "Raw metrics use complete7200-pulse banks, ordered groups GPIO2\u2192GPIO1\u2192GPIO0, and exclude cross-capture gaps.",
+      "No hardware calls or changes were made."
+    ]
+  }
+}

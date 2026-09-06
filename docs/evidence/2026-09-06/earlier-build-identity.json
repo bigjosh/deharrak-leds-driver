@@ -1,0 +1,96 @@
+{
+  "record_type": "derived summary",
+  "provenance": {
+    "sources": [
+      {
+        "archive_path": "build/bench-20260906/final-build-evidence/build-report.txt",
+        "sha256": "fe1c291aa13d8d14b4e9e3c5ffcb22ad0f11b6baa8ff3f67cf9664cf262d7b2a",
+        "bytes": 8308
+      }
+    ],
+    "extraction": "Verbatim compiler/size/hash excerpts from the earlier report. Its kernel module predates the final loaded module; use handback-summary.json for final module identity.",
+    "numerical_policy": "Selected original values and text; no measurement values recomputed."
+  },
+  "data": [
+    {
+      "line": 1,
+      "text": "DLD native build report"
+    },
+    {
+      "line": 2,
+      "text": "CFLAGS=-std=c99 -O2 -Wall -Wextra -Werror -mcpu=cortex-a8 -marm -mfpu=neon -mfloat-abi=hard"
+    },
+    {
+      "line": 5,
+      "text": "gcc (Debian 4.6.3-14) 4.6.3"
+    },
+    {
+      "line": 6,
+      "text": "GNU Make 3.81"
+    },
+    {
+      "line": 7,
+      "text": "GNU ld (GNU Binutils for Debian) 2.22"
+    },
+    {
+      "line": 8,
+      "text": "glibc 2.13"
+    },
+    {
+      "line": 9,
+      "text": "armhf"
+    },
+    {
+      "line": 11,
+      "text": "Artifact sizes"
+    },
+    {
+      "line": 12,
+      "text": " 4412 build/pru.bin"
+    },
+    {
+      "line": 13,
+      "text": "33009 build/dld-init"
+    },
+    {
+      "line": 14,
+      "text": "28796 build/dld-send"
+    },
+    {
+      "line": 15,
+      "text": "15435 kernel/dld_quiet.ko"
+    },
+    {
+      "line": 16,
+      "text": "81652 total"
+    },
+    {
+      "line": 17,
+      "text": "   text\t   data\t    bss\t    dec\t    hex\tfilename"
+    },
+    {
+      "line": 77,
+      "text": "da45899a51fdedbf80ec2a7d60c785f5be82970caf115f807b54719661084a60  build/pru.bin"
+    },
+    {
+      "line": 78,
+      "text": "12121602fc119314450faea6548c717bbd299a8d64e37da2df4304961c55b840  build/dld-init"
+    },
+    {
+      "line": 79,
+      "text": "875431b8a7c12204fea1a972d6aac73bffeda4ede7c5d7ff84d5993af1251679  build/dld-send"
+    },
+    {
+      "line": 80,
+      "text": "ba665d441f8a1e11c8d24da239797f2a25795ef7bbabb12e6ab2f38705d80487  kernel/dld_quiet.ko"
+    },
+    {
+      "line": 85,
+      "text": "srcversion:     2737485647638DDD53A963A"
+    },
+    {
+      "line": 87,
+      "text": "vermagic:       3.8.13-bone80 SMP mod_unload modversions ARMv7 thumb2 p2v8 "
+    }
+  ]
+}

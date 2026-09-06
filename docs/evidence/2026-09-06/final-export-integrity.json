@@ -1,0 +1,116 @@
+{
+  "record_type": "derived summary",
+  "provenance": {
+    "sources": [
+      {
+        "archive_path": "build/bench-20260906/protected-overnight-002/014-zero-final/chunk-0007/independent-export-integrity.json",
+        "sha256": "4522ca37a3ceb6c44424d00b9dd0670b4c11d828d314a67e81d70726eb45e5ae",
+        "bytes": 3411
+      }
+    ],
+    "extraction": "Original header/size/ZIP-CRC and boundary-accounting findings; file path omitted.",
+    "numerical_policy": "Selected original values and text; no measurement values recomputed."
+  },
+  "data": {
+    "status": "PASS",
+    "raw_headers": [
+      {
+        "channel": 0,
+        "bytes": 23195668,
+        "transitions": 2899453,
+        "initial_state": 0,
+        "final_state": 1,
+        "begin_s": 0.0,
+        "end_s": 30.03121664,
+        "first_transition_s": 0.076688994,
+        "last_transition_s": 30.031216302
+      },
+      {
+        "channel": 1,
+        "bytes": 23195668,
+        "transitions": 2899453,
+        "initial_state": 0,
+        "final_state": 1,
+        "begin_s": 0.0,
+        "end_s": 30.03121664,
+        "first_transition_s": 0.076688994,
+        "last_transition_s": 30.031216302
+      },
+      {
+        "channel": 2,
+        "bytes": 23155244,
+        "transitions": 2894400,
+        "initial_state": 0,
+        "final_state": 0,
+        "begin_s": 0.0,
+        "end_s": 30.03121664,
+        "first_transition_s": 0.111053014,
+        "last_transition_s": 29.92861631
+      },
+      {
+        "channel": 3,
+        "bytes": 23249724,
+        "transitions": 2906210,
+        "initial_state": 0,
+        "final_state": 0,
+        "begin_s": 0.0,
+        "end_s": 30.03121664,
+        "first_transition_s": 2.2400000000000198e-07,
+        "last_transition_s": 29.961508448
+      },
+      {
+        "channel": 4,
+        "bytes": 23155244,
+        "transitions": 2894400,
+        "initial_state": 0,
+        "final_state": 0,
+        "begin_s": 0.0,
+        "end_s": 30.03121664,
+        "first_transition_s": 0.111053016,
+        "last_transition_s": 29.92861631
+      },
+      {
+        "channel": 5,
+        "bytes": 23195668,
+        "transitions": 2899453,
+        "initial_state": 0,
+        "final_state": 1,
+        "begin_s": 0.0,
+        "end_s": 30.03121664,
+        "first_transition_s": 0.076688996,
+        "last_transition_s": 30.031216304
+      }
+    ],
+    "session_integrity": {
+      "bytes": 5019155,
+      "is_zip": true,
+      "members": [
+        "digital-0.bin",
+        "digital-1.bin",
+        "digital-2.bin",
+        "digital-3.bin",
+        "digital-4.bin",
+        "digital-5.bin",
+        "meta.json",
+        "trigger-store.bin"
+      ],
+      "first_bad_crc_member": null
+    },
+    "note": "Validated file sizes/header counts/time bounds/edge parity against manual analysis. Existing strict waveform analysis supplies full transition/timing/content checks. No UI or hardware calls.",
+    "boundary_accounting": {
+      "complete_pulses": 8696683,
+      "complete_channel_frames": 1206,
+      "complete_frame_bits": 8683200,
+      "complete_boundary_pulses_excluded_from_full_frames": 13483,
+      "partial_channel_frames": 4,
+      "partial_highs": 3,
+      "details": "One leading GPIO0 fragment has 5,905 complete pulses; three trailing GPIO2 fragments have 2,526 complete pulses each plus one end-partial high each."
+    },
+    "notes": [
+      "All six binary files have internally complete v0 records and matching acquisition intervals. Capture-end waveform fragments are temporal boundaries, not corrupt or truncated export records.",
+      "waveform.sal ZIP CRC verification passed for every member.",
+      "Acquisition finished before operator STOP. Metadata remained exporting and the finished capture tab may remain open; no analyzer UI state was inspected.",
+      "The capture ends during a GPIO2 high. Final output-low state is established by the later handback snapshot, not by this capture endpoint."
+    ]
+  }
+}

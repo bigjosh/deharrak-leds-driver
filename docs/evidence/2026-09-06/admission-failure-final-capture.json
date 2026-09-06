@@ -1,0 +1,120 @@
+{
+  "record_type": "derived summary",
+  "provenance": {
+    "sources": [
+      {
+        "archive_path": "build/bench-20260906/protected-overnight-001/002-cycle-normal/chunk-0014/manual-review.json",
+        "sha256": "f6550ed1b671a28e5981fbeb386401f77361d3f72c97d62e71c8d45248e482df",
+        "bytes": 4149
+      }
+    ],
+    "extraction": "Existing final clean-frame and rejected-next-command findings; executable argv omitted.",
+    "numerical_policy": "Selected original values and text; no measurement values recomputed."
+  },
+  "data": {
+    "status": "PASS",
+    "capture_duration_s": 30.025624192,
+    "coverage": {
+      "complete_pulses": 3585600,
+      "complete_channel_frames": 498,
+      "complete_bursts": 0,
+      "complete_frame_bits": 3585600,
+      "note": "Capture duration is continuous exported time, not summed pulse time. No acquisition-gap information exists in v0."
+    },
+    "violations": 0,
+    "partial_frames": 0,
+    "partial_highs": 0,
+    "complete_panel_cycles": 83,
+    "successful_sends_before_failure": 3934,
+    "failed_sends": 1,
+    "last_successful_send_index_zero_based": 3933,
+    "last_successful_cycle_index_zero_based": 39,
+    "last_successful_send_start_utc": "2026-09-06T06:25:07.355523+00:00",
+    "last_successful_send_finish_utc": "2026-09-06T06:25:07.664371+00:00",
+    "sender_failure": {
+      "color": "FFFFDF",
+      "exit": 3,
+      "finished_unix": 1788675907.756961,
+      "send_index": 3934,
+      "started_unix": 1788675907.667749,
+      "stderr": "dld-send: quiet helper rejected before publication: stage=1 result=-110 (Connection timed out) cpu_khz=1000000 blocked_engine=3 blocked_status=0x01E70106\n",
+      "stdout": "",
+      "watchdog_expired": false
+    },
+    "channels": [
+      {
+        "channel": 0,
+        "first_frame_rgb": "000020",
+        "last_frame_rgb": "FFFFEF",
+        "last_frame_first_rise_s": 14.94099028,
+        "last_transition_s": 14.949701202,
+        "trailing_low_s": 15.075922989999999,
+        "first_transition_s": 0.002392138,
+        "frames": 83,
+        "matches_exact_final83_successful_schedule_colors": true
+      },
+      {
+        "channel": 1,
+        "first_frame_rgb": "000020",
+        "last_frame_rgb": "FFFFEF",
+        "last_frame_first_rise_s": 14.94099028,
+        "last_transition_s": 14.949701202,
+        "trailing_low_s": 15.075922989999999,
+        "first_transition_s": 0.002392138,
+        "frames": 83,
+        "matches_exact_final83_successful_schedule_colors": true
+      },
+      {
+        "channel": 2,
+        "first_frame_rgb": "000020",
+        "last_frame_rgb": "FFFFEF",
+        "last_frame_first_rise_s": 15.03398757,
+        "last_transition_s": 15.04269848,
+        "trailing_low_s": 14.982925711999998,
+        "first_transition_s": 0.03765923,
+        "frames": 83,
+        "matches_exact_final83_successful_schedule_colors": true
+      },
+      {
+        "channel": 3,
+        "first_frame_rgb": "000020",
+        "last_frame_rgb": "FFFFEF",
+        "last_frame_first_rise_s": 15.094711952,
+        "last_transition_s": 15.103422874,
+        "trailing_low_s": 14.922201317999999,
+        "first_transition_s": 0.07056506,
+        "frames": 83,
+        "matches_exact_final83_successful_schedule_colors": true
+      },
+      {
+        "channel": 4,
+        "first_frame_rgb": "000020",
+        "last_frame_rgb": "FFFFEF",
+        "last_frame_first_rise_s": 15.03398757,
+        "last_transition_s": 15.04269848,
+        "trailing_low_s": 14.982925711999998,
+        "first_transition_s": 0.03765923,
+        "frames": 83,
+        "matches_exact_final83_successful_schedule_colors": true
+      },
+      {
+        "channel": 5,
+        "first_frame_rgb": "000020",
+        "last_frame_rgb": "FFFFEF",
+        "last_frame_first_rise_s": 14.94099028,
+        "last_transition_s": 14.949701204,
+        "trailing_low_s": 15.075922987999999,
+        "first_transition_s": 0.00239214,
+        "frames": 83,
+        "matches_exact_final83_successful_schedule_colors": true
+      }
+    ],
+    "notes": [
+      "Six raw exports independently decoded at the first 24 bits of each complete 7200-pulse frame; the main checker validates uniformity across all 300 pixels.",
+      "The decoded 83-frame suffix on all six channels exactly matches the final 83 successful command colors from the deterministic schedule.",
+      "Capture-relative edge timing is exact to the retained samples; no exact physical-to-host UTC synchronization is inferred.",
+      "Sender/kernel records establish pre-publication rejection and mailbox state; waveforms alone do not identify the admission reason.",
+      "Original supervisor status and raw capture files were not modified."
+    ]
+  }
+}

@@ -1,0 +1,12 @@
+# Keep source, shell scripts, and documentation portable to the Linux target.
+* text=auto eol=lf
+
+# Preserve vendored source and recorded evidence byte-for-byte for their hashes.
+/vendor/pasm/** -text
+/docs/evidence/** -text
+
+*.png binary
+*.jpg binary
+*.pdf binary
+*.sal binary
+*.bin binary

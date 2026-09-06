@@ -1,0 +1,106 @@
+{
+  "record_type": "derived summary",
+  "provenance": {
+    "sources": [
+      {
+        "archive_path": "build/bench-20260906/protected-early-review.json",
+        "sha256": "d4c75a798b2574c6e026e989f04f4ad48e86b5cea513cfa3e6f0accb2c2d2025",
+        "bytes": 46222
+      }
+    ],
+    "extraction": "Existing early protected phase totals and independent GPIO0 extrema, without per-capture paths.",
+    "numerical_policy": "Selected original values and text; no measurement values recomputed."
+  },
+  "data": {
+    "reviewed_utc": "2026-09-06T04:43:55.182993+00:00",
+    "status": "PASS available completed captures",
+    "notes": [
+      "Each primary analysis.json/capture directory is counted once; reviewed/duplicate analyses are excluded.",
+      "Durations are sums of nonoverlapping captured intervals, with acquisition/export/analysis gaps between them.",
+      "Complete pulse counts include observable pulses in partial frames. Only complete frame counts represent entire channel frames.",
+      "Independent raw GPIO0 statistics use known color, exact quantiles, and a four-ULP floating roundoff allowance.",
+      "Raw low/period statistics exclude reset gaps; the main checker separately validates reset-delimited frame lengths/content.",
+      "No inference is made about actual LED decoding, latched color, or uncaptured intervals."
+    ],
+    "phases": {
+      "000-zero": {
+        "captures": 2,
+        "duration_s": 60.090395263999994,
+        "complete_pulses_all_channels": 57458150,
+        "complete_channel_frames": 7979,
+        "complete_frame_bits": 57448800,
+        "complete_panel_cycles": 1329,
+        "partial_boundary_frames": 5,
+        "partial_highs": 1,
+        "gpio0_complete_pulses": 9573830,
+        "gpio0_complete_frames": 1329,
+        "gpio0_metrics": {
+          "high": {
+            "count": 9573830,
+            "min_ns": 347.9999932665123,
+            "max_ns": 360.0000049175378,
+            "mean_ns": 353.88550621848367
+          },
+          "zero_data_low": {
+            "count": 9572499,
+            "min_ns": 847.9999955568474,
+            "max_ns": 864.000000433407,
+            "mean_ns": 856.0348090922029
+          },
+          "one_data_low": {
+            "count": 0,
+            "min_ns": null,
+            "max_ns": null,
+            "mean_ns": null
+          },
+          "bit_period": {
+            "count": 9572499,
+            "min_ns": 1206.0000003089044,
+            "max_ns": 1212.0000043580603,
+            "mean_ns": 1209.9203098375954
+          }
+        },
+        "violation_count": 0
+      },
+      "001-one": {
+        "captures": 3,
+        "duration_s": 62.450390272,
+        "complete_pulses_all_channels": 59678741,
+        "complete_channel_frames": 8285,
+        "complete_frame_bits": 59652000,
+        "complete_panel_cycles": 1379,
+        "partial_boundary_frames": 10,
+        "partial_highs": 7,
+        "gpio0_complete_pulses": 9949970,
+        "gpio0_complete_frames": 1381,
+        "gpio0_metrics": {
+          "high": {
+            "count": 9949970,
+            "min_ns": 695.9999998557009,
+            "max_ns": 712.000005620439,
+            "mean_ns": 704.2364975973843
+          },
+          "zero_data_low": {
+            "count": 0,
+            "min_ns": null,
+            "max_ns": null,
+            "mean_ns": null
+          },
+          "one_data_low": {
+            "count": 9948589,
+            "min_ns": 497.9999985721406,
+            "max_ns": 512.0000068359332,
+            "mean_ns": 505.6837975718035
+          },
+          "bit_period": {
+            "count": 9948589,
+            "min_ns": 1206.0000003089044,
+            "max_ns": 1212.0000043580603,
+            "mean_ns": 1209.9202916112006
+          }
+        },
+        "violation_count": 0
+      }
+    }
+  }
+}

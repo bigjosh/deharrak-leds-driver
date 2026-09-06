@@ -1,0 +1,257 @@
+[
+  {
+    "load": "none",
+    "seed": 19461011,
+    "mode": "cycle",
+    "profile": "ws2812b",
+    "name": "cycle-normal",
+    "duration": 1600,
+    "color": "000000",
+    "lengths": [
+      300,
+      300,
+      300,
+      300,
+      300,
+      300
+    ]
+  },
+  {
+    "load": "none",
+    "seed": 19461012,
+    "mode": "random",
+    "profile": "ws2811-hs",
+    "name": "random-ws2811",
+    "duration": 1600,
+    "color": "000000",
+    "lengths": [
+      300,
+      300,
+      300,
+      300,
+      300,
+      300
+    ]
+  },
+  {
+    "load": "ddr",
+    "seed": 19461013,
+    "mode": "fixed",
+    "profile": "ws2812b",
+    "name": "zero-ddr",
+    "duration": 1600,
+    "color": "000000",
+    "lengths": [
+      300,
+      300,
+      300,
+      300,
+      300,
+      300
+    ]
+  },
+  {
+    "load": "ddr",
+    "seed": 19461014,
+    "mode": "fixed",
+    "profile": "ws2812b",
+    "name": "one-ddr",
+    "duration": 1600,
+    "color": "FFFFFF",
+    "lengths": [
+      300,
+      300,
+      300,
+      300,
+      300,
+      300
+    ]
+  },
+  {
+    "load": "ethernet",
+    "seed": 19461015,
+    "mode": "random",
+    "profile": "ws2812b",
+    "name": "random-ethernet",
+    "duration": 1600,
+    "color": "000000",
+    "lengths": [
+      300,
+      300,
+      300,
+      300,
+      300,
+      300
+    ]
+  },
+  {
+    "load": "cpu",
+    "seed": 19461016,
+    "mode": "cycle",
+    "profile": "ws2812b",
+    "name": "cycle-cpu",
+    "duration": 1600,
+    "color": "000000",
+    "lengths": [
+      300,
+      300,
+      300,
+      300,
+      300,
+      300
+    ]
+  },
+  {
+    "load": "none",
+    "seed": 19461017,
+    "mode": "fixed",
+    "profile": "ws2812b",
+    "name": "zero-unequal",
+    "duration": 1600,
+    "color": "000000",
+    "lengths": [
+      300,
+      180,
+      1,
+      299,
+      256,
+      2
+    ]
+  },
+  {
+    "load": "none",
+    "seed": 19461018,
+    "mode": "fixed",
+    "profile": "ws2812b",
+    "name": "one-gpio0",
+    "duration": 1600,
+    "color": "FFFFFF",
+    "lengths": [
+      0,
+      0,
+      0,
+      300,
+      0,
+      0
+    ]
+  },
+  {
+    "load": "none",
+    "seed": 19461019,
+    "mode": "fixed",
+    "profile": "ws2812b-bgr",
+    "name": "zero-bgr",
+    "duration": 1600,
+    "color": "000000",
+    "lengths": [
+      300,
+      300,
+      300,
+      300,
+      300,
+      300
+    ]
+  },
+  {
+    "load": "none",
+    "seed": 19461020,
+    "mode": "fixed",
+    "profile": "ws2811-hs-bgr",
+    "name": "one-bgr",
+    "duration": 1600,
+    "color": "FFFFFF",
+    "lengths": [
+      300,
+      300,
+      300,
+      300,
+      300,
+      300
+    ]
+  },
+  {
+    "load": "none",
+    "seed": 19461021,
+    "mode": "cycle",
+    "profile": "ws2811-hs-bgr",
+    "name": "cycle-unequal",
+    "duration": 1600,
+    "color": "000000",
+    "lengths": [
+      300,
+      180,
+      1,
+      299,
+      256,
+      2
+    ]
+  },
+  {
+    "load": "none",
+    "seed": 19461022,
+    "mode": "random",
+    "profile": "ws2812b-bgr",
+    "name": "random-full-bgr",
+    "duration": 1600,
+    "color": "000000",
+    "lengths": [
+      300,
+      300,
+      300,
+      300,
+      300,
+      300
+    ]
+  },
+  {
+    "load": "ethernet",
+    "seed": 19461023,
+    "mode": "fixed",
+    "profile": "ws2812b",
+    "name": "zero-ethernet",
+    "duration": 1600,
+    "color": "000000",
+    "lengths": [
+      300,
+      300,
+      300,
+      300,
+      300,
+      300
+    ]
+  },
+  {
+    "load": "ethernet",
+    "seed": 19461024,
+    "mode": "fixed",
+    "profile": "ws2812b",
+    "name": "one-ethernet",
+    "duration": 1600,
+    "color": "FFFFFF",
+    "lengths": [
+      300,
+      300,
+      300,
+      300,
+      300,
+      300
+    ]
+  },
+  {
+    "name": "zero-final",
+    "duration": 1800,
+    "mode": "fixed",
+    "color": "000000",
+    "profile": "ws2812b",
+    "lengths": [
+      300,
+      300,
+      300,
+      300,
+      300,
+      300
+    ],
+    "load": "none",
+    "seed": 19461100
+  }
+]

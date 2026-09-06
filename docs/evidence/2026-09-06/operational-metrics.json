@@ -1,0 +1,296 @@
+{
+  "started_utc": "2026-09-06T06:50:11.091701+00:00",
+  "finished_utc": "2026-09-06T13:10:23.440349+00:00",
+  "wall_seconds": 22812.343999999808,
+  "phases": [
+    {
+      "name": "cycle-normal",
+      "status": "pass",
+      "successful_sends": 10726,
+      "failed_sends": 0,
+      "sender_seconds": 1597.6498773149997,
+      "sends_per_second": 6.713611131135971,
+      "irq_off_max_ms": [
+        9.264488,
+        9.265976,
+        9.266006
+      ],
+      "dma_drain_max_us": [
+        1.013,
+        1.553,
+        1.196
+      ],
+      "cleanup_errors": []
+    },
+    {
+      "name": "random-ws2811",
+      "status": "pass",
+      "successful_sends": 10771,
+      "failed_sends": 0,
+      "sender_seconds": 1603.1107548159998,
+      "sends_per_second": 6.718812139237543,
+      "irq_off_max_ms": [
+        9.263884,
+        9.265796,
+        9.266072
+      ],
+      "dma_drain_max_us": [
+        1.007,
+        1.162,
+        1.164
+      ],
+      "cleanup_errors": []
+    },
+    {
+      "name": "zero-ddr",
+      "status": "pass",
+      "successful_sends": 8538,
+      "failed_sends": 0,
+      "sender_seconds": 1601.7596790660027,
+      "sends_per_second": 5.330387642782073,
+      "irq_off_max_ms": [
+        9.263638,
+        9.266074,
+        9.26604
+      ],
+      "dma_drain_max_us": [
+        1.007,
+        2.055,
+        1.202
+      ],
+      "cleanup_errors": []
+    },
+    {
+      "name": "one-ddr",
+      "status": "pass",
+      "successful_sends": 8538,
+      "failed_sends": 0,
+      "sender_seconds": 1601.6693622739986,
+      "sends_per_second": 5.3306882188706055,
+      "irq_off_max_ms": [
+        9.263678,
+        9.266178,
+        9.26605
+      ],
+      "dma_drain_max_us": [
+        1.015,
+        1.166,
+        1.003
+      ],
+      "cleanup_errors": []
+    },
+    {
+      "name": "random-ethernet",
+      "status": "pass",
+      "successful_sends": 10601,
+      "failed_sends": 0,
+      "sender_seconds": 1602.1720049409996,
+      "sends_per_second": 6.616642886848085,
+      "irq_off_max_ms": [
+        9.264174,
+        9.266104,
+        9.266147
+      ],
+      "dma_drain_max_us": [
+        1.013,
+        1.329,
+        1.279
+      ],
+      "cleanup_errors": []
+    },
+    {
+      "name": "cycle-cpu",
+      "status": "pass",
+      "successful_sends": 8542,
+      "failed_sends": 0,
+      "sender_seconds": 1600.6971018160002,
+      "sends_per_second": 5.336424980284559,
+      "irq_off_max_ms": [
+        9.263494,
+        9.26585,
+        9.265706
+      ],
+      "dma_drain_max_us": [
+        1.007,
+        1.152,
+        1.106
+      ],
+      "cleanup_errors": []
+    },
+    {
+      "name": "zero-unequal",
+      "status": "pass",
+      "successful_sends": 11121,
+      "failed_sends": 0,
+      "sender_seconds": 1602.1562250660027,
+      "sends_per_second": 6.941270661381263,
+      "irq_off_max_ms": [
+        9.263548,
+        7.998616,
+        9.236954
+      ],
+      "dma_drain_max_us": [
+        1.03,
+        1.19,
+        1.19
+      ],
+      "cleanup_errors": []
+    },
+    {
+      "name": "one-gpio0",
+      "status": "pass",
+      "successful_sends": 20292,
+      "failed_sends": 0,
+      "sender_seconds": 1602.2967601909986,
+      "sends_per_second": 12.664320682756129,
+      "irq_off_max_ms": [
+        0.0,
+        0.0,
+        9.263994
+      ],
+      "dma_drain_max_us": [
+        0.0,
+        0.0,
+        1.021
+      ],
+      "cleanup_errors": []
+    },
+    {
+      "name": "zero-bgr",
+      "status": "pass",
+      "successful_sends": 10768,
+      "failed_sends": 0,
+      "sender_seconds": 1602.3744190239995,
+      "sends_per_second": 6.72002739943811,
+      "irq_off_max_ms": [
+        9.26351,
+        9.266016,
+        9.266092
+      ],
+      "dma_drain_max_us": [
+        1.003,
+        1.198,
+        1.166
+      ],
+      "cleanup_errors": []
+    },
+    {
+      "name": "one-bgr",
+      "status": "pass",
+      "successful_sends": 10788,
+      "failed_sends": 0,
+      "sender_seconds": 1604.5225671080007,
+      "sends_per_second": 6.723495338207891,
+      "irq_off_max_ms": [
+        9.26366,
+        9.265926,
+        9.265856
+      ],
+      "dma_drain_max_us": [
+        1.015,
+        1.168,
+        1.172
+      ],
+      "cleanup_errors": []
+    },
+    {
+      "name": "cycle-unequal",
+      "status": "pass",
+      "successful_sends": 11123,
+      "failed_sends": 0,
+      "sender_seconds": 1601.6871049410001,
+      "sends_per_second": 6.944552382101951,
+      "irq_off_max_ms": [
+        9.263524,
+        7.998672,
+        9.23713
+      ],
+      "dma_drain_max_us": [
+        2.783,
+        1.186,
+        1.172
+      ],
+      "cleanup_errors": []
+    },
+    {
+      "name": "random-full-bgr",
+      "status": "pass",
+      "successful_sends": 10732,
+      "failed_sends": 0,
+      "sender_seconds": 1598.2268074410022,
+      "sends_per_second": 6.714941803024517,
+      "irq_off_max_ms": [
+        9.263802,
+        9.265829,
+        9.265936
+      ],
+      "dma_drain_max_us": [
+        1.134,
+        1.18,
+        1.172
+      ],
+      "cleanup_errors": []
+    },
+    {
+      "name": "zero-ethernet",
+      "status": "pass",
+      "successful_sends": 10631,
+      "failed_sends": 0,
+      "sender_seconds": 1605.5848853170028,
+      "sends_per_second": 6.621263127985315,
+      "irq_off_max_ms": [
+        9.263836,
+        9.26596,
+        9.266132
+      ],
+      "dma_drain_max_us": [
+        1.011,
+        2.575,
+        1.275
+      ],
+      "cleanup_errors": []
+    },
+    {
+      "name": "one-ethernet",
+      "status": "pass",
+      "successful_sends": 10614,
+      "failed_sends": 0,
+      "sender_seconds": 1602.108925941,
+      "sends_per_second": 6.625017705188714,
+      "irq_off_max_ms": [
+        9.264002,
+        9.266134,
+        9.265914
+      ],
+      "dma_drain_max_us": [
+        1.009,
+        1.132,
+        1.174
+      ],
+      "cleanup_errors": []
+    },
+    {
+      "name": "zero-final",
+      "status": "fail",
+      "successful_sends": 2132,
+      "failed_sends": 0,
+      "sender_seconds": 317.7585148290018,
+      "sends_per_second": 6.709497623210229,
+      "irq_off_max_ms": [
+        9.26332,
+        9.265448,
+        9.266044
+      ],
+      "dma_drain_max_us": [
+        0.975,
+        1.15,
+        1.084
+      ],
+      "cleanup_errors": []
+    }
+  ],
+  "successful_sends": 155917,
+  "failed_sends": 0,
+  "irq_off_max_ms": 9.266178,
+  "dma_drain_max_us": 2.783
+}

@@ -1,0 +1,135 @@
+{
+  "record_type": "derived summary",
+  "provenance": {
+    "sources": [
+      {
+        "archive_path": "build/bench-20260906/handback-final.json",
+        "sha256": "1fe0abb400fbea5ff520b2b6345672acc20037aeab0b5b6c4170e41aa6f9ff87",
+        "bytes": 119499
+      }
+    ],
+    "extraction": "Retains historical checks, configuration, owned output state, CPU/LED settings and final artifact hashes. Omits boot ID, full dmesg, process inventories, terminal commands and local runtime paths.",
+    "numerical_policy": "Selected original values and text; no measurement values recomputed."
+  },
+  "data": {
+    "schema_version": 1,
+    "started_utc": "2026-09-06T13:10:40Z",
+    "finished_utc": "2026-09-06T13:10:41Z",
+    "status": "pass",
+    "checks": {
+      "PRU0_enabled_PRU1_stopped": true,
+      "all_owned_outputs_low": true,
+      "all_started_senders_finished_cleanly": true,
+      "cpu_fixed_1GHz": true,
+      "dmesg_no_new_error_candidates": true,
+      "four_user_leds_prepared": true,
+      "helper_loaded_matching_srcversion": true,
+      "ledscape_inactive": true,
+      "legacy_renderers_not_running": true,
+      "mailbox_DONE_complete": true,
+      "mailbox_configuration_valid": true,
+      "mailbox_matches_final_sender": true,
+      "no_swap": true,
+      "only_cpu0_online": true,
+      "owned_sender_driver_load_absent": true,
+      "runtime_artifact_hashes_match": true
+    },
+    "errors": [],
+    "kernel": "3.8.13-bone80",
+    "cpu": {
+      "scaling_cur_freq": "1000000",
+      "scaling_governor": "performance",
+      "scaling_max_freq": "1000000",
+      "scaling_min_freq": "1000000"
+    },
+    "online_cpus": "0",
+    "leds": {
+      "beaglebone:green:usr0": {
+        "brightness": "0",
+        "trigger": "[none] nand-disk mmc0 mmc1 timer oneshot heartbeat backlight gpio cpu0 default-on transient"
+      },
+      "beaglebone:green:usr1": {
+        "brightness": "0",
+        "trigger": "[none] nand-disk mmc0 mmc1 timer oneshot heartbeat backlight gpio cpu0 default-on transient"
+      },
+      "beaglebone:green:usr2": {
+        "brightness": "0",
+        "trigger": "[none] nand-disk mmc0 mmc1 timer oneshot heartbeat backlight gpio cpu0 default-on transient"
+      },
+      "beaglebone:green:usr3": {
+        "brightness": "0",
+        "trigger": "[none] nand-disk mmc0 mmc1 timer oneshot heartbeat backlight gpio cpu0 default-on transient"
+      }
+    },
+    "mailbox": {
+      "abi_version": 4,
+      "accepted_seq": 2132,
+      "bank_done": 3,
+      "bank_grant": 3,
+      "bank_ready": 0,
+      "completion_seq": 2132,
+      "error_detail": 0,
+      "gpio_dataout": [
+        0,
+        0,
+        0
+      ],
+      "gpio_led_masks": [
+        67108864,
+        20480,
+        26
+      ],
+      "gpio_oe": [
+        858763379,
+        3456110591,
+        4231790593
+      ],
+      "magic": 1145848881,
+      "profile_id": 1,
+      "pru_control": [
+        32771,
+        1
+      ],
+      "request_seq": 2132,
+      "status": 3,
+      "string_lengths": [
+        300,
+        300,
+        300,
+        300,
+        300,
+        300
+      ],
+      "wire_color": 0
+    },
+    "limits": [
+      "Disk hashes plus loaded srcversion and preserved load evidence identify the helper; this does not hash live kernel text.",
+      "Dmesg is not cleared. Review every message after the latest load; a wrapped ring cannot establish missing history.",
+      "Output-low means GPIO output latch state; final physical capture is separate evidence.",
+      "Process inventory observes exact owned runtime paths and leaves all processes unchanged."
+    ],
+    "artifact_hashes": {
+      "dld-init": {
+        "actual": "12121602fc119314450faea6548c717bbd299a8d64e37da2df4304961c55b840",
+        "expected": "12121602fc119314450faea6548c717bbd299a8d64e37da2df4304961c55b840",
+        "match": true
+      },
+      "dld-send": {
+        "actual": "875431b8a7c12204fea1a972d6aac73bffeda4ede7c5d7ff84d5993af1251679",
+        "expected": "875431b8a7c12204fea1a972d6aac73bffeda4ede7c5d7ff84d5993af1251679",
+        "match": true
+      },
+      "dld_quiet.ko": {
+        "actual": "1e9aa2b967c5930d820989a0c76acc1f7a88eafce6ff184f156ea49687753414",
+        "expected": "1e9aa2b967c5930d820989a0c76acc1f7a88eafce6ff184f156ea49687753414",
+        "match": true
+      }
+    },
+    "module": {
+      "srcversion": "A68C9E83214A669AA2A7069",
+      "refcnt": "0"
+    },
+    "dmesg_since_last_helper_load": [],
+    "dmesg_new_error_candidates": []
+  }
+}

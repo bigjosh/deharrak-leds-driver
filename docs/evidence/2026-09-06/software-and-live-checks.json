@@ -1,0 +1,98 @@
+{
+  "record_type": "derived summary",
+  "provenance": {
+    "sources": [
+      {
+        "archive_path": "build/bench-20260906/final-build-evidence/protected-final-build.log",
+        "sha256": "bfd5dc44fbdfefa6aa86a82ae7e13e6626388f4503e08fda5268e9bc382a07bd",
+        "bytes": 12649
+      },
+      {
+        "archive_path": "build/bench-20260906/final-build-evidence/protected-final-kernel-audit.log",
+        "sha256": "9d6262b209c7167cbf4a19bbf6b7b649c4f83302fdb24e6f7735ea3fde966a4b",
+        "bytes": 616
+      },
+      {
+        "archive_path": "build/bench-20260906/protected-build-initial.log",
+        "sha256": "336bb8fb871b6745166e4d6d0e19dfadfaf1256d5b8f19a17a6e47b2bd002794",
+        "bytes": 12462
+      },
+      {
+        "archive_path": "build/bench-20260906/hardware-test-t3obbm/results.jsonl",
+        "sha256": "67b8baf477324f7fd4a7364410e41cf29226319d82aa312223a552e5459ef3c5",
+        "bytes": 84399
+      },
+      {
+        "archive_path": "build/bench-20260906/hardware-test-9gjvr0/results.jsonl",
+        "sha256": "5f557521559259cdc2f419bff3100f82395c026e7dc9836c4931edefdba8457f",
+        "bytes": 12097
+      }
+    ],
+    "extraction": "Verbatim result-line excerpts with original line numbers. Absolute-path command lines and unrelated log output omitted; initial/final build stages remain separate.",
+    "numerical_policy": "Selected original values and text; no measurement values recomputed."
+  },
+  "data": {
+    "final-build-evidence/protected-final-build.log": [
+      {
+        "line": 21,
+        "text": "PASS common: 487 checks"
+      },
+      {
+        "line": 27,
+        "text": "PASS ENOTTY before publication: exit=3 cleanup=0"
+      },
+      {
+        "line": 28,
+        "text": "PASS EPERM before publication: exit=3 cleanup=0"
+      },
+      {
+        "line": 29,
+        "text": "PASS EFAULT after completed frame: exit=5 cleanup=1"
+      },
+      {
+        "line": 30,
+        "text": "PASS uncertain interrupted ioctl: exit=5 cleanup=1"
+      },
+      {
+        "line": 32,
+        "text": "PASS successful completed frame: exit=0 cleanup=0"
+      },
+      {
+        "line": 33,
+        "text": "PASS offline sender syscall handling: 5 cases; no hardware or lock files accessed"
+      },
+      {
+        "line": 35,
+        "text": "PASS CLI rejection: 15 checks"
+      }
+    ],
+    "final-build-evidence/protected-final-kernel-audit.log": [
+      {
+        "line": 4,
+        "text": "{\"arm_call_relocations\": 0, \"cache_line_bytes\": 64, \"completion_loads\": 1, \"grant_address\": 3584, \"grant_stores\": 1, \"independent_iteration_guard\": true, \"pmu_register\": \"CP15 c9,c13,0\", \"quiet_loop_data_accesses\": 0, \"quiet_region_relocations\": 0, \"rejected_dangerous_mutations\": 11, \"same_loop_warmup\": true, \"status\": \"pass\", \"thumb2_kernel_entry\": true, \"timing_loop_instructions\": 7}"
+      }
+    ],
+    "bench-20260906/protected-build-initial.log": [
+      {
+        "line": 37,
+        "text": "PASS common: 487 checks"
+      },
+      {
+        "line": 39,
+        "text": "PASS CLI rejection: 15 checks"
+      }
+    ],
+    "hardware-test-t3obbm/results.jsonl": [
+      {
+        "line": 171,
+        "text": "{\"checks\": 1866, \"commands\": 169, \"final_state\": \"READY, ws2812b, six zero lengths; both latches and directions verified\", \"result\": \"PASS\"}"
+      }
+    ],
+    "hardware-test-9gjvr0/results.jsonl": [
+      {
+        "line": 25,
+        "text": "{\"checks\": 256, \"commands\": 23, \"final_state\": \"READY, ws2812b, six zero lengths\", \"limits\": \"Publication and host interruption verified; exact PRU phase at signal and waveform timing not established\", \"result\": \"PASS\", \"signal_delay_ms\": 20, \"suite\": \"sender signals\"}"
+      }
+    ]
+  }
+}

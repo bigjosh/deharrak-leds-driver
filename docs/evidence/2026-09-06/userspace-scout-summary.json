@@ -1,0 +1,93 @@
+{
+  "record_type": "derived summary",
+  "provenance": {
+    "sources": [
+      {
+        "archive_path": "build/bench-20260906/scout-001/status.json",
+        "sha256": "02c6e813f945b673aab69342d124b1da35e97fe13611829128d4639b9b97580a",
+        "bytes": 8486
+      }
+    ],
+    "extraction": "Supervisor waveform counts/phase outcomes only; command/process details omitted.",
+    "numerical_policy": "Selected original values and text; no measurement values recomputed."
+  },
+  "data": {
+    "status": "stopped",
+    "captured_seconds": 103.258171904,
+    "checked_seconds": 73.232547712,
+    "validated_seconds": 0.0,
+    "chunks": 3,
+    "complete_pulses": 41491358,
+    "complete_channel_frames": 5760,
+    "violation_count": 13,
+    "violation_counts": {
+      "bit_period": 6,
+      "high_width": 3,
+      "low_width": 4
+    },
+    "phases": [
+      {
+        "status": "completed_with_violations",
+        "captured_seconds": 73.232547712,
+        "checked_seconds": 73.232547712,
+        "validated_seconds": 0.0,
+        "chunks": 3,
+        "complete_pulses": 41491358,
+        "complete_channel_frames": 5760,
+        "violation_count": 13,
+        "violation_counts": {
+          "bit_period": 6,
+          "high_width": 3,
+          "low_width": 4
+        },
+        "name": "zero-normal",
+        "parameters": {
+          "color": "000000",
+          "duration": 90,
+          "lengths": [
+            300,
+            300,
+            300,
+            300,
+            300,
+            300
+          ],
+          "load": "none",
+          "mode": "fixed",
+          "name": "zero-normal",
+          "profile": "ws2812b",
+          "seed": 539363590
+        }
+      },
+      {
+        "status": "fail",
+        "captured_seconds": 30.025624192,
+        "checked_seconds": 0.0,
+        "validated_seconds": 0.0,
+        "chunks": 0,
+        "complete_pulses": 0,
+        "complete_channel_frames": 0,
+        "violation_count": 0,
+        "violation_counts": {},
+        "name": "one-normal",
+        "parameters": {
+          "color": "FFFFFF",
+          "duration": 90,
+          "lengths": [
+            300,
+            300,
+            300,
+            300,
+            300,
+            300
+          ],
+          "load": "none",
+          "mode": "fixed",
+          "name": "one-normal",
+          "profile": "ws2812b",
+          "seed": 539363590
+        }
+      }
+    ]
+  }
+}

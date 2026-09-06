@@ -1,0 +1,4 @@
+# Windows capture/analysis host only; validated with Python 3.12.
+# The native BBG driver build uses its existing Python 3.2 and does not need these.
+numpy==2.3.5
+logic2-automation==1.0.11

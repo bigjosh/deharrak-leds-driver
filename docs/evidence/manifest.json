@@ -1,0 +1,774 @@
+{
+  "schema_version": 1,
+  "scope": "Portable curated evidence; original local archive remains unchanged.",
+  "records": [
+    {
+      "path": "2026-09-06/final-overnight-summary.json",
+      "kind": "derived summary",
+      "sources": [
+        {
+          "archive_path": "build/bench-20260906/overnight-aggregation/summary-20260906T131406130109Z.json",
+          "sha256": "54b59598d09a5849370c5cae1feb91ddd2ee58fd3264cc536e36d7b1336aa342",
+          "bytes": 815678
+        }
+      ],
+      "sha256": "469215214e46132b9b439d8945ed6050246cdf4dc8a58178f48896c72f0015bc",
+      "description": "Retains all coverage, phase/timing results and relative analysis identities. Omits absolute capture directories, command argv and traceback text."
+    },
+    {
+      "path": "2026-09-06/final-overnight-summary.md",
+      "kind": "exact byte copy",
+      "sources": [
+        {
+          "archive_path": "build/bench-20260906/overnight-aggregation/summary-20260906T131406130109Z.md",
+          "sha256": "9aa5e44abbe8290cbed7d7a187b70c2d7f610025b528e563803f873285010d57",
+          "bytes": 5404
+        }
+      ],
+      "sha256": "9aa5e44abbe8290cbed7d7a187b70c2d7f610025b528e563803f873285010d57"
+    },
+    {
+      "path": "2026-09-06/operational-metrics.json",
+      "kind": "exact byte copy",
+      "sources": [
+        {
+          "archive_path": "build/bench-20260906/overnight-final-operational-metrics.json",
+          "sha256": "fc71e7da08fc38d30a094aed95c3bc857af1ac20b6b7985aa3fcac83d40eef5c",
+          "bytes": 6670
+        }
+      ],
+      "sha256": "fc71e7da08fc38d30a094aed95c3bc857af1ac20b6b7985aa3fcac83d40eef5c"
+    },
+    {
+      "path": "2026-09-06/handback-summary.json",
+      "kind": "derived summary",
+      "sources": [
+        {
+          "archive_path": "build/bench-20260906/handback-final.json",
+          "sha256": "1fe0abb400fbea5ff520b2b6345672acc20037aeab0b5b6c4170e41aa6f9ff87",
+          "bytes": 119499
+        }
+      ],
+      "sha256": "129572ccc948c571b6c19a35da02becabb42bb3406f0f84a86bb0f0fdda7d8cf",
+      "description": "Retains historical checks, configuration, owned output state, CPU/LED settings and final artifact hashes. Omits boot ID, full dmesg, process inventories, terminal commands and local runtime paths."
+    },
+    {
+      "path": "2026-09-06/windows-handback-summary.json",
+      "kind": "derived summary",
+      "sources": [
+        {
+          "archive_path": "build/bench-20260906/handback-windows.json",
+          "sha256": "4f8c6365b310d29dd2febee9a0c90da13ac310b78fc3cdb9d35dd9c5e9d16e54",
+          "bytes": 1299
+        }
+      ],
+      "sha256": "766d639957806eb2d8b4497caab3948e712b4b146a9db5dd3434ed835f1a59a7",
+      "description": "Retains no-owned-worker observation, acquisition timestamps and stale export status; omits analyzer serial and application PID."
+    },
+    {
+      "path": "2026-09-06/overnight-001-plan.json",
+      "kind": "exact byte copy",
+      "sources": [
+        {
+          "archive_path": "build/bench-20260906/protected-overnight-plan.json",
+          "sha256": "90bcab980f931c763e7c4d46d8c4d2d3a1dd52c8790d5b6530a464398b2740b1",
+          "bytes": 4419
+        }
+      ],
+      "sha256": "90bcab980f931c763e7c4d46d8c4d2d3a1dd52c8790d5b6530a464398b2740b1"
+    },
+    {
+      "path": "2026-09-06/overnight-002-plan.json",
+      "kind": "exact byte copy",
+      "sources": [
+        {
+          "archive_path": "build/bench-20260906/protected-overnight-002-plan.json",
+          "sha256": "63e63c65d3eb208fac388301142ffdac1a9c8148873b956656d36b7e7c88a421",
+          "bytes": 4144
+        }
+      ],
+      "sha256": "63e63c65d3eb208fac388301142ffdac1a9c8148873b956656d36b7e7c88a421"
+    },
+    {
+      "path": "2026-09-06/preparation-state.json",
+      "kind": "exact byte copy",
+      "sources": [
+        {
+          "archive_path": "build/bench-20260906/preparation-state.json",
+          "sha256": "ea3675b1e4d83123b9570d7dea21eb3cd2cf632a380fe1cc1399dc9960a172dd",
+          "bytes": 728
+        }
+      ],
+      "sha256": "ea3675b1e4d83123b9570d7dea21eb3cd2cf632a380fe1cc1399dc9960a172dd"
+    },
+    {
+      "path": "2026-09-06/first-zero-analysis.json",
+      "kind": "derived summary",
+      "sources": [
+        {
+          "archive_path": "build/bench-20260906/first-zero-30s/analysis.json",
+          "sha256": "ca8824d376d4bdc8c4574bde32f2b28fc2fc48271b91a2c1caf9bd4b9517a14c",
+          "bytes": 92777
+        }
+      ],
+      "sha256": "1da4268b3ae3647d949570a2c1ab583ca35b9f202d2ef2fcee2538493b3a7daa",
+      "description": "Original checker values; absolute capture/file paths omitted. Raw captures remain local-only."
+    },
+    {
+      "path": "2026-09-06/first-one-analysis.json",
+      "kind": "derived summary",
+      "sources": [
+        {
+          "archive_path": "build/bench-20260906/first-one-30s/analysis.json",
+          "sha256": "43f72938e94b975a1ac471e9168aa236f15a630c3e251d6469f90cb1ebf1f12c",
+          "bytes": 90307
+        }
+      ],
+      "sha256": "fe5e35e99f5c8209c5d82b6ad53c654477dc152ee3184bf46bcfb324202f9124",
+      "description": "Original checker values; absolute capture/file paths omitted. Raw captures remain local-only."
+    },
+    {
+      "path": "2026-09-06/first-zero-anomaly.json",
+      "kind": "derived summary",
+      "sources": [
+        {
+          "archive_path": "build/bench-20260906/first-zero-30s/anomaly-review.json",
+          "sha256": "24308396d275c93003c1eae2880b41836e0efd33246b88b1f7facb4e963ee857",
+          "bytes": 44940
+        }
+      ],
+      "sha256": "1fb6b2fbdd28671c53c24cc8140e928892dde8eb78649adb4a260feee0a49d75",
+      "description": "Independent raw-edge findings retained, including the raw SHA-256. Absolute raw-file path omitted."
+    },
+    {
+      "path": "2026-09-06/anomaly-edge-excerpt.csv",
+      "kind": "exact byte copy",
+      "sources": [
+        {
+          "archive_path": "build/bench-20260906/first-zero-30s/anomaly-edge-excerpt.csv",
+          "sha256": "8705a4aecc1615d568b2cd2edf7e3fa8c302b5a6dc4cee4e1526bd8cbced42ce",
+          "bytes": 6104
+        }
+      ],
+      "sha256": "8705a4aecc1615d568b2cd2edf7e3fa8c302b5a6dc4cee4e1526bd8cbced42ce"
+    },
+    {
+      "path": "2026-09-06/anomaly-symbol-excerpt.csv",
+      "kind": "exact byte copy",
+      "sources": [
+        {
+          "archive_path": "build/bench-20260906/first-zero-30s/anomaly-symbol-excerpt.csv",
+          "sha256": "d0991e05805e8e8a5fc5941b8d867b21ecc7a9d0d88bedce41a7284e9ef565c5",
+          "bytes": 9291
+        }
+      ],
+      "sha256": "d0991e05805e8e8a5fc5941b8d867b21ecc7a9d0d88bedce41a7284e9ef565c5"
+    },
+    {
+      "path": "2026-09-06/legacy-captures.json",
+      "kind": "derived summary",
+      "sources": [
+        {
+          "archive_path": "build/bench-20260906/legacy-001/analysis.json",
+          "sha256": "5b52b1d1cfa88f0b724b79d7c66a1799aa61c4697bb47a081addd87cbbbcc502",
+          "bytes": 99951
+        },
+        {
+          "archive_path": "build/bench-20260906/legacy-002/analysis.json",
+          "sha256": "adeb8fcb02fb5eb84fb506874eafbfa3b3438908ae3a3746424ec8e22276ee13",
+          "bytes": 161765
+        },
+        {
+          "archive_path": "build/bench-20260906/legacy-003/analysis.json",
+          "sha256": "66ea139a961f6e0fb56bbefacfdb00655b07fbf812316bd5c6922e402adf947c",
+          "bytes": 200597
+        }
+      ],
+      "sha256": "8a221e6f522942cf06a356c5907ee0fd5bfd5dd0983502f0d7f8ac2f0727f15a",
+      "description": "Legacy distribution/burst characterization copied from original analyses; no WS281x pass/fail decoding added. Absolute file paths omitted."
+    },
+    {
+      "path": "2026-09-06/userspace-short-tests.json",
+      "kind": "derived summary",
+      "sources": [
+        {
+          "archive_path": "build/bench-20260906/reanalysis-review.json",
+          "sha256": "a95cb2b7afa05a095ab9e3522d864ceedf54727c38a36b889c783050e6f02a1e",
+          "bytes": 1644837
+        }
+      ],
+      "sha256": "7a045479f97808d85139ef92d7d05c741d20cf136506ffe6f589750c744a1edd",
+      "description": "Existing short-test totals and exclusions only; per-case records remain in the local archive."
+    },
+    {
+      "path": "2026-09-06/userspace-scout-summary.json",
+      "kind": "derived summary",
+      "sources": [
+        {
+          "archive_path": "build/bench-20260906/scout-001/status.json",
+          "sha256": "02c6e813f945b673aab69342d124b1da35e97fe13611829128d4639b9b97580a",
+          "bytes": 8486
+        }
+      ],
+      "sha256": "968dce99db92289c359daa55ce5b84750becb483f9dd3e2f54e5f357be0d5327",
+      "description": "Supervisor waveform counts/phase outcomes only; command/process details omitted."
+    },
+    {
+      "path": "2026-09-06/early-protected-summary.json",
+      "kind": "derived summary",
+      "sources": [
+        {
+          "archive_path": "build/bench-20260906/protected-early-review.json",
+          "sha256": "d4c75a798b2574c6e026e989f04f4ad48e86b5cea513cfa3e6f0accb2c2d2025",
+          "bytes": 46222
+        }
+      ],
+      "sha256": "c720eed614757a107a2ec23aa870d8c99f0761651ae911c74febb8015be742fe",
+      "description": "Existing early protected phase totals and independent GPIO0 extrema, without per-capture paths."
+    },
+    {
+      "path": "2026-09-06/cadence-summary.json",
+      "kind": "derived summary",
+      "sources": [
+        {
+          "archive_path": "build/bench-20260906/protected-cadence-review.json",
+          "sha256": "e557e9bc749d6b20f2942dc2abdf6790a5748cfbccdb7f4ea046b4d466e76759",
+          "bytes": 10947
+        }
+      ],
+      "sha256": "7d96a7ab9911f9652ebdb0ce640d349dd0c99a0009a05172ca79120c8590cd31",
+      "description": "Existing command/bank timing distributions only; unrelated user-session process details omitted."
+    },
+    {
+      "path": "2026-09-06/protected-short-captures.json",
+      "kind": "derived summary",
+      "sources": [
+        {
+          "archive_path": "build/bench-20260906/protected-smoke-001/status.json",
+          "sha256": "ea21da4d309d243fdb13de456de7c807a9cf39b93d2313e2006ef1376cc742bb",
+          "bytes": 2240
+        },
+        {
+          "archive_path": "build/bench-20260906/protected-matrix-001/status.json",
+          "sha256": "f70765219af89e3cfba60b094018acaf0114daf186352f70ca3d19fcdfb95eee",
+          "bytes": 53459
+        },
+        {
+          "archive_path": "build/bench-20260906/protected-final-smoke/status.json",
+          "sha256": "1c254e38baa3ef56371798b479b034409bdcbce05926797cd7e036b28e9873d0",
+          "bytes": 2241
+        },
+        {
+          "archive_path": "build/bench-20260906/protected-loaded-001/status.json",
+          "sha256": "94548bdedc1b892b8df69c0b4078f8a0869698b26afe2c07fd2c6dc31cc9074e",
+          "bytes": 27356
+        },
+        {
+          "archive_path": "build/bench-20260906/protected-signals-and-matrix-review.json",
+          "sha256": "b7296845cd01aaa75157d180d36b66f7ed9079dfb15eff96bbcb6f71a442490e",
+          "bytes": 12824
+        }
+      ],
+      "sha256": "4a90763ead0caacadabc6cb2245f4d345b4b7167010473312352eb954e12c656",
+      "description": "Existing smoke, matrix, signal-capture and loaded-scout records; sender/process details omitted. No coverage totals recomputed."
+    },
+    {
+      "path": "2026-09-06/admission-failure-final-capture.json",
+      "kind": "derived summary",
+      "sources": [
+        {
+          "archive_path": "build/bench-20260906/protected-overnight-001/002-cycle-normal/chunk-0014/manual-review.json",
+          "sha256": "f6550ed1b671a28e5981fbeb386401f77361d3f72c97d62e71c8d45248e482df",
+          "bytes": 4149
+        }
+      ],
+      "sha256": "ad84337d27b4041d71968d9048ab5431b9ee4ce936ae063a04b6ff51d515fbbf",
+      "description": "Existing final clean-frame and rejected-next-command findings; executable argv omitted."
+    },
+    {
+      "path": "2026-09-06/admission-failure-final-capture.md",
+      "kind": "exact byte copy",
+      "sources": [
+        {
+          "archive_path": "build/bench-20260906/protected-overnight-001/002-cycle-normal/chunk-0014/manual-review.md",
+          "sha256": "beaaa030b609217a479b135bf04c8e472f84ac66b680ff746842b48c75f7cbd2",
+          "bytes": 1501
+        }
+      ],
+      "sha256": "beaaa030b609217a479b135bf04c8e472f84ac66b680ff746842b48c75f7cbd2"
+    },
+    {
+      "path": "2026-09-06/admission-failure-mailbox.json",
+      "kind": "exact byte copy",
+      "sources": [
+        {
+          "archive_path": "build/bench-20260906/protected-overnight-001/failure-hardware-snapshot.json",
+          "sha256": "92352d6cfbd2d14586726817e855e7acceaa9fdad76280ce25c982d05ecf787a",
+          "bytes": 378
+        }
+      ],
+      "sha256": "92352d6cfbd2d14586726817e855e7acceaa9fdad76280ce25c982d05ecf787a"
+    },
+    {
+      "path": "2026-09-06/storage-admission-captures.json",
+      "kind": "derived summary",
+      "sources": [
+        {
+          "archive_path": "build/bench-20260906/admission-storage-zero-001/analysis.json",
+          "sha256": "9f85a0d004d15c1687a730cb80ddb8fdb6b362e6145ba98c4f2265531dc7cc03",
+          "bytes": 72280
+        },
+        {
+          "archive_path": "build/bench-20260906/admission-storage-one-001/analysis.json",
+          "sha256": "733ac7aa05584f4a2b5f37a18d0c813a3faf5620e1719bf713614f546931784d",
+          "bytes": 72231
+        }
+      ],
+      "sha256": "ca3f631cc7e392e29fecb985603889a0340bdbc691bd26445f796d5e7b00dc5e",
+      "description": "Original controlled storage-capture analyses, with absolute paths omitted."
+    },
+    {
+      "path": "2026-09-06/final-supplement-analysis.json",
+      "kind": "derived summary",
+      "sources": [
+        {
+          "archive_path": "build/bench-20260906/protected-overnight-002/014-zero-final/chunk-0007/manual-analysis.json",
+          "sha256": "8ef045862af182b40c06b6eec96d37a3d43f7a29ebe398a31769452286f7f12b",
+          "bytes": 74288
+        }
+      ],
+      "sha256": "b65c5eb7ab84ffed1cc0996b4230ce3939f5556ba468278f65c14b4fcfb8a989",
+      "description": "Original final-supplement checker report; temporal boundary fragments remain explicit and absolute file paths are omitted."
+    },
+    {
+      "path": "2026-09-06/final-export-integrity.json",
+      "kind": "derived summary",
+      "sources": [
+        {
+          "archive_path": "build/bench-20260906/protected-overnight-002/014-zero-final/chunk-0007/independent-export-integrity.json",
+          "sha256": "4522ca37a3ceb6c44424d00b9dd0670b4c11d828d314a67e81d70726eb45e5ae",
+          "bytes": 3411
+        }
+      ],
+      "sha256": "06bc67ef7fff3723ccfb75b9f4f041508429f4911a0090ec2e7399bf67069ebb",
+      "description": "Original header/size/ZIP-CRC and boundary-accounting findings; file path omitted."
+    },
+    {
+      "path": "2026-09-06/kernel-probe-events.jsonl",
+      "kind": "exact byte copy",
+      "sources": [
+        {
+          "archive_path": "build/bench-20260906/kernel-probe-001/events.jsonl",
+          "sha256": "3af23173563765a2da79473ec8dbfec1be7ed50bb56d3b476b0da3f6742cb590",
+          "bytes": 2621
+        }
+      ],
+      "sha256": "3af23173563765a2da79473ec8dbfec1be7ed50bb56d3b476b0da3f6742cb590"
+    },
+    {
+      "path": "2026-09-06/pru-audit.txt",
+      "kind": "exact byte copy",
+      "sources": [
+        {
+          "archive_path": "build/bench-20260906/final-build-evidence/pru-audit-windows.log",
+          "sha256": "640cd4b25669c830477fca5d01906a34a1f8e659a1dcbaedc9a9fb4e36503a67",
+          "bytes": 511
+        }
+      ],
+      "sha256": "640cd4b25669c830477fca5d01906a34a1f8e659a1dcbaedc9a9fb4e36503a67"
+    },
+    {
+      "path": "2026-09-06/software-and-live-checks.json",
+      "kind": "derived summary",
+      "sources": [
+        {
+          "archive_path": "build/bench-20260906/final-build-evidence/protected-final-build.log",
+          "sha256": "bfd5dc44fbdfefa6aa86a82ae7e13e6626388f4503e08fda5268e9bc382a07bd",
+          "bytes": 12649
+        },
+        {
+          "archive_path": "build/bench-20260906/final-build-evidence/protected-final-kernel-audit.log",
+          "sha256": "9d6262b209c7167cbf4a19bbf6b7b649c4f83302fdb24e6f7735ea3fde966a4b",
+          "bytes": 616
+        },
+        {
+          "archive_path": "build/bench-20260906/protected-build-initial.log",
+          "sha256": "336bb8fb871b6745166e4d6d0e19dfadfaf1256d5b8f19a17a6e47b2bd002794",
+          "bytes": 12462
+        },
+        {
+          "archive_path": "build/bench-20260906/hardware-test-t3obbm/results.jsonl",
+          "sha256": "67b8baf477324f7fd4a7364410e41cf29226319d82aa312223a552e5459ef3c5",
+          "bytes": 84399
+        },
+        {
+          "archive_path": "build/bench-20260906/hardware-test-9gjvr0/results.jsonl",
+          "sha256": "5f557521559259cdc2f419bff3100f82395c026e7dc9836c4931edefdba8457f",
+          "bytes": 12097
+        }
+      ],
+      "sha256": "0b9afb61b92eba6d5e32d09278e788751827c8d1ca657b29056cbd1b10a6a95b",
+      "description": "Verbatim result-line excerpts with original line numbers. Absolute-path command lines and unrelated log output omitted; initial/final build stages remain separate."
+    },
+    {
+      "path": "2026-09-06/earlier-build-identity.json",
+      "kind": "derived summary",
+      "sources": [
+        {
+          "archive_path": "build/bench-20260906/final-build-evidence/build-report.txt",
+          "sha256": "fe1c291aa13d8d14b4e9e3c5ffcb22ad0f11b6baa8ff3f67cf9664cf262d7b2a",
+          "bytes": 8308
+        }
+      ],
+      "sha256": "f3a4440f2d98bc5554860de5c907c443b4c6611bc88da644c06a6d26c61cbc3e",
+      "description": "Verbatim compiler/size/hash excerpts from the earlier report. Its kernel module predates the final loaded module; use handback-summary.json for final module identity."
+    },
+    {
+      "path": "2026-09-05/historical-checks.json",
+      "kind": "derived summary",
+      "sources": [
+        {
+          "archive_path": "build/bbg/final-native-validation.log",
+          "sha256": "fa8658d3b8021c3bd326f30f54704e39bc50724e457b563ce5016fe19f8564ba",
+          "bytes": 7715
+        },
+        {
+          "archive_path": "build/bbg/hardware-suite.log",
+          "sha256": "22a8cc9527c68c4a601508960925cb02e31628ab87898ae593d289f64e99e803",
+          "bytes": 587
+        },
+        {
+          "archive_path": "build/bbg/signal-suite.log",
+          "sha256": "a3f889d4e05d63f1977458cc64a322047d97c979abfe0a03376052e223790b81",
+          "bytes": 281
+        },
+        {
+          "archive_path": "build/bbg/handover-test.txt",
+          "sha256": "23927a26f68b96d3ad4c5b293fa3bfd775b61a303979e64e94e5ab7381cef664",
+          "bytes": 2063
+        }
+      ],
+      "sha256": "87e31be0d7f29b16dd3d3556087fbd27a83d0f9a6093067e8c60427fa84198b6",
+      "description": "Verbatim historical ABI3 result lines; local host/build paths omitted."
+    },
+    {
+      "path": "2026-09-05/spin-benchmark.txt",
+      "kind": "exact byte copy",
+      "sources": [
+        {
+          "archive_path": "build/bbg/spin-benchmark-final.txt",
+          "sha256": "b2058cd5ec4cc70335faf8a4dbbd7868de332577b2ff2c03424b72bc2478cbee",
+          "bytes": 437
+        }
+      ],
+      "sha256": "b2058cd5ec4cc70335faf8a4dbbd7868de332577b2ff2c03424b72bc2478cbee"
+    }
+  ],
+  "local_archive": [
+    {
+      "archive_path": "build/bench-20260906/overnight-aggregation/summary-20260906T131406130109Z.json",
+      "sha256": "54b59598d09a5849370c5cae1feb91ddd2ee58fd3264cc536e36d7b1336aa342",
+      "bytes": 815678
+    },
+    {
+      "archive_path": "build/bench-20260906/overnight-aggregation/summary-20260906T131406130109Z.md",
+      "sha256": "9aa5e44abbe8290cbed7d7a187b70c2d7f610025b528e563803f873285010d57",
+      "bytes": 5404
+    },
+    {
+      "archive_path": "build/bench-20260906/overnight-final-operational-metrics.json",
+      "sha256": "fc71e7da08fc38d30a094aed95c3bc857af1ac20b6b7985aa3fcac83d40eef5c",
+      "bytes": 6670
+    },
+    {
+      "archive_path": "build/bench-20260906/handback-final.json",
+      "sha256": "1fe0abb400fbea5ff520b2b6345672acc20037aeab0b5b6c4170e41aa6f9ff87",
+      "bytes": 119499
+    },
+    {
+      "archive_path": "build/bench-20260906/handback-windows.json",
+      "sha256": "4f8c6365b310d29dd2febee9a0c90da13ac310b78fc3cdb9d35dd9c5e9d16e54",
+      "bytes": 1299
+    },
+    {
+      "archive_path": "build/bench-20260906/protected-overnight-plan.json",
+      "sha256": "90bcab980f931c763e7c4d46d8c4d2d3a1dd52c8790d5b6530a464398b2740b1",
+      "bytes": 4419
+    },
+    {
+      "archive_path": "build/bench-20260906/protected-overnight-002-plan.json",
+      "sha256": "63e63c65d3eb208fac388301142ffdac1a9c8148873b956656d36b7e7c88a421",
+      "bytes": 4144
+    },
+    {
+      "archive_path": "build/bench-20260906/preparation-state.json",
+      "sha256": "ea3675b1e4d83123b9570d7dea21eb3cd2cf632a380fe1cc1399dc9960a172dd",
+      "bytes": 728
+    },
+    {
+      "archive_path": "build/bench-20260906/first-zero-30s/analysis.json",
+      "sha256": "ca8824d376d4bdc8c4574bde32f2b28fc2fc48271b91a2c1caf9bd4b9517a14c",
+      "bytes": 92777
+    },
+    {
+      "archive_path": "build/bench-20260906/first-one-30s/analysis.json",
+      "sha256": "43f72938e94b975a1ac471e9168aa236f15a630c3e251d6469f90cb1ebf1f12c",
+      "bytes": 90307
+    },
+    {
+      "archive_path": "build/bench-20260906/first-zero-30s/anomaly-review.json",
+      "sha256": "24308396d275c93003c1eae2880b41836e0efd33246b88b1f7facb4e963ee857",
+      "bytes": 44940
+    },
+    {
+      "archive_path": "build/bench-20260906/first-zero-30s/anomaly-edge-excerpt.csv",
+      "sha256": "8705a4aecc1615d568b2cd2edf7e3fa8c302b5a6dc4cee4e1526bd8cbced42ce",
+      "bytes": 6104
+    },
+    {
+      "archive_path": "build/bench-20260906/first-zero-30s/anomaly-symbol-excerpt.csv",
+      "sha256": "d0991e05805e8e8a5fc5941b8d867b21ecc7a9d0d88bedce41a7284e9ef565c5",
+      "bytes": 9291
+    },
+    {
+      "archive_path": "build/bench-20260906/legacy-001/analysis.json",
+      "sha256": "5b52b1d1cfa88f0b724b79d7c66a1799aa61c4697bb47a081addd87cbbbcc502",
+      "bytes": 99951
+    },
+    {
+      "archive_path": "build/bench-20260906/legacy-002/analysis.json",
+      "sha256": "adeb8fcb02fb5eb84fb506874eafbfa3b3438908ae3a3746424ec8e22276ee13",
+      "bytes": 161765
+    },
+    {
+      "archive_path": "build/bench-20260906/legacy-003/analysis.json",
+      "sha256": "66ea139a961f6e0fb56bbefacfdb00655b07fbf812316bd5c6922e402adf947c",
+      "bytes": 200597
+    },
+    {
+      "archive_path": "build/bench-20260906/reanalysis-review.json",
+      "sha256": "a95cb2b7afa05a095ab9e3522d864ceedf54727c38a36b889c783050e6f02a1e",
+      "bytes": 1644837
+    },
+    {
+      "archive_path": "build/bench-20260906/scout-001/status.json",
+      "sha256": "02c6e813f945b673aab69342d124b1da35e97fe13611829128d4639b9b97580a",
+      "bytes": 8486
+    },
+    {
+      "archive_path": "build/bench-20260906/protected-early-review.json",
+      "sha256": "d4c75a798b2574c6e026e989f04f4ad48e86b5cea513cfa3e6f0accb2c2d2025",
+      "bytes": 46222
+    },
+    {
+      "archive_path": "build/bench-20260906/protected-cadence-review.json",
+      "sha256": "e557e9bc749d6b20f2942dc2abdf6790a5748cfbccdb7f4ea046b4d466e76759",
+      "bytes": 10947
+    },
+    {
+      "archive_path": "build/bench-20260906/protected-smoke-001/status.json",
+      "sha256": "ea21da4d309d243fdb13de456de7c807a9cf39b93d2313e2006ef1376cc742bb",
+      "bytes": 2240
+    },
+    {
+      "archive_path": "build/bench-20260906/protected-matrix-001/status.json",
+      "sha256": "f70765219af89e3cfba60b094018acaf0114daf186352f70ca3d19fcdfb95eee",
+      "bytes": 53459
+    },
+    {
+      "archive_path": "build/bench-20260906/protected-final-smoke/status.json",
+      "sha256": "1c254e38baa3ef56371798b479b034409bdcbce05926797cd7e036b28e9873d0",
+      "bytes": 2241
+    },
+    {
+      "archive_path": "build/bench-20260906/protected-loaded-001/status.json",
+      "sha256": "94548bdedc1b892b8df69c0b4078f8a0869698b26afe2c07fd2c6dc31cc9074e",
+      "bytes": 27356
+    },
+    {
+      "archive_path": "build/bench-20260906/protected-signals-and-matrix-review.json",
+      "sha256": "b7296845cd01aaa75157d180d36b66f7ed9079dfb15eff96bbcb6f71a442490e",
+      "bytes": 12824
+    },
+    {
+      "archive_path": "build/bench-20260906/protected-overnight-001/002-cycle-normal/chunk-0014/manual-review.json",
+      "sha256": "f6550ed1b671a28e5981fbeb386401f77361d3f72c97d62e71c8d45248e482df",
+      "bytes": 4149
+    },
+    {
+      "archive_path": "build/bench-20260906/protected-overnight-001/002-cycle-normal/chunk-0014/manual-review.md",
+      "sha256": "beaaa030b609217a479b135bf04c8e472f84ac66b680ff746842b48c75f7cbd2",
+      "bytes": 1501
+    },
+    {
+      "archive_path": "build/bench-20260906/protected-overnight-001/failure-hardware-snapshot.json",
+      "sha256": "92352d6cfbd2d14586726817e855e7acceaa9fdad76280ce25c982d05ecf787a",
+      "bytes": 378
+    },
+    {
+      "archive_path": "build/bench-20260906/admission-storage-zero-001/analysis.json",
+      "sha256": "9f85a0d004d15c1687a730cb80ddb8fdb6b362e6145ba98c4f2265531dc7cc03",
+      "bytes": 72280
+    },
+    {
+      "archive_path": "build/bench-20260906/admission-storage-one-001/analysis.json",
+      "sha256": "733ac7aa05584f4a2b5f37a18d0c813a3faf5620e1719bf713614f546931784d",
+      "bytes": 72231
+    },
+    {
+      "archive_path": "build/bench-20260906/protected-overnight-002/014-zero-final/chunk-0007/manual-analysis.json",
+      "sha256": "8ef045862af182b40c06b6eec96d37a3d43f7a29ebe398a31769452286f7f12b",
+      "bytes": 74288
+    },
+    {
+      "archive_path": "build/bench-20260906/protected-overnight-002/014-zero-final/chunk-0007/independent-export-integrity.json",
+      "sha256": "4522ca37a3ceb6c44424d00b9dd0670b4c11d828d314a67e81d70726eb45e5ae",
+      "bytes": 3411
+    },
+    {
+      "archive_path": "build/bench-20260906/kernel-probe-001/events.jsonl",
+      "sha256": "3af23173563765a2da79473ec8dbfec1be7ed50bb56d3b476b0da3f6742cb590",
+      "bytes": 2621
+    },
+    {
+      "archive_path": "build/bench-20260906/final-build-evidence/pru-audit-windows.log",
+      "sha256": "640cd4b25669c830477fca5d01906a34a1f8e659a1dcbaedc9a9fb4e36503a67",
+      "bytes": 511
+    },
+    {
+      "archive_path": "build/bench-20260906/final-build-evidence/protected-final-build.log",
+      "sha256": "bfd5dc44fbdfefa6aa86a82ae7e13e6626388f4503e08fda5268e9bc382a07bd",
+      "bytes": 12649
+    },
+    {
+      "archive_path": "build/bench-20260906/final-build-evidence/protected-final-kernel-audit.log",
+      "sha256": "9d6262b209c7167cbf4a19bbf6b7b649c4f83302fdb24e6f7735ea3fde966a4b",
+      "bytes": 616
+    },
+    {
+      "archive_path": "build/bench-20260906/protected-build-initial.log",
+      "sha256": "336bb8fb871b6745166e4d6d0e19dfadfaf1256d5b8f19a17a6e47b2bd002794",
+      "bytes": 12462
+    },
+    {
+      "archive_path": "build/bench-20260906/hardware-test-t3obbm/results.jsonl",
+      "sha256": "67b8baf477324f7fd4a7364410e41cf29226319d82aa312223a552e5459ef3c5",
+      "bytes": 84399
+    },
+    {
+      "archive_path": "build/bench-20260906/hardware-test-9gjvr0/results.jsonl",
+      "sha256": "5f557521559259cdc2f419bff3100f82395c026e7dc9836c4931edefdba8457f",
+      "bytes": 12097
+    },
+    {
+      "archive_path": "build/bench-20260906/final-build-evidence/build-report.txt",
+      "sha256": "fe1c291aa13d8d14b4e9e3c5ffcb22ad0f11b6baa8ff3f67cf9664cf262d7b2a",
+      "bytes": 8308
+    },
+    {
+      "archive_path": "build/bbg/final-native-validation.log",
+      "sha256": "fa8658d3b8021c3bd326f30f54704e39bc50724e457b563ce5016fe19f8564ba",
+      "bytes": 7715
+    },
+    {
+      "archive_path": "build/bbg/hardware-suite.log",
+      "sha256": "22a8cc9527c68c4a601508960925cb02e31628ab87898ae593d289f64e99e803",
+      "bytes": 587
+    },
+    {
+      "archive_path": "build/bbg/signal-suite.log",
+      "sha256": "a3f889d4e05d63f1977458cc64a322047d97c979abfe0a03376052e223790b81",
+      "bytes": 281
+    },
+    {
+      "archive_path": "build/bbg/handover-test.txt",
+      "sha256": "23927a26f68b96d3ad4c5b293fa3bfd775b61a303979e64e94e5ab7381cef664",
+      "bytes": 2063
+    },
+    {
+      "archive_path": "build/bbg/spin-benchmark-final.txt",
+      "sha256": "b2058cd5ec4cc70335faf8a4dbbd7868de332577b2ff2c03424b72bc2478cbee",
+      "bytes": 437
+    },
+    {
+      "archive_path": "build/bbg/build-report.txt",
+      "sha256": "a20b06748ab845144a353c3a0b8ba11f3e5c9fe339226f559a027e98ac610df7",
+      "bytes": 6173
+    },
+    {
+      "archive_path": "build/bbg/pruss-fault-dmesg.txt",
+      "sha256": "560571d6020959a641842b44c660c9e5482908fdb560f95c0a87ff02b728e9aa",
+      "bytes": 25227
+    },
+    {
+      "archive_path": "build/bbg/restoration.txt",
+      "sha256": "7c65c886478cd5addb3e0fb1248b076f43bc9f138188cab948b8d831170c9fa0",
+      "bytes": 39822
+    },
+    {
+      "archive_path": "build/bbg/validation-artifacts.tar.gz",
+      "sha256": "231eebd88446488461af8183529769d6ce5d915ee3eca7ff9ac829bcad42161a",
+      "bytes": 188120
+    },
+    {
+      "archive_path": "build/bench-20260906/plan.md",
+      "sha256": "c8d63f2a432513bd3556765e92401e484f2e7ee35f5e136c46413a7864071fc6",
+      "bytes": 19815
+    },
+    {
+      "archive_path": "build/bench-20260906/admission-storage-zero-load.jsonl",
+      "sha256": "0ff73669f1423fe6995f092bd4e3867aea60a3e7626f14a5ea3e8ee79b0545c3",
+      "bytes": 9279
+    },
+    {
+      "archive_path": "build/bench-20260906/admission-storage-one-load.jsonl",
+      "sha256": "8ca27c65885e78f8a61a5f40beb5a83cccbec403656d9d744f896a0199140d57",
+      "bytes": 9224
+    },
+    {
+      "archive_path": "build/bench-20260906/first-zero-30s/digital_3.bin",
+      "sha256": "dd40f450585d460db734fbe83ce4560701504ad7041940bad511a198ad08990a",
+      "bytes": 45734444
+    },
+    {
+      "archive_path": "build/bench-20260906/first-zero-30s/waveform.sal",
+      "sha256": "fe0c075d3c5960a45224d770b6b28abffb7f83acde9bb97cef239b5a61e0c0f2",
+      "bytes": 9302348
+    },
+    {
+      "archive_path": "build/bench-20260906/protected-overnight-002/014-zero-final/chunk-0007/capture/digital_0.bin",
+      "sha256": "98ee29a3a4dfd27e347f9c89ced8d24bc0cb57744f310ff33cdc22f34fd5b4a9",
+      "bytes": 23195668
+    },
+    {
+      "archive_path": "build/bench-20260906/protected-overnight-002/014-zero-final/chunk-0007/capture/digital_1.bin",
+      "sha256": "fe65ba8323928490a8ebc7e30afd1b61293071f2adda45ba1622e19b34badd68",
+      "bytes": 23195668
+    },
+    {
+      "archive_path": "build/bench-20260906/protected-overnight-002/014-zero-final/chunk-0007/capture/digital_2.bin",
+      "sha256": "a26cb29c04d9a491e116c108d4a2f75e2a0692e43c2bd5585f1a82fa81b353cc",
+      "bytes": 23155244
+    },
+    {
+      "archive_path": "build/bench-20260906/protected-overnight-002/014-zero-final/chunk-0007/capture/digital_3.bin",
+      "sha256": "4d4b4d883c364a64e75beb887d2762e5fc5e5d40db549f318d49babcd7c92a5a",
+      "bytes": 23249724
+    },
+    {
+      "archive_path": "build/bench-20260906/protected-overnight-002/014-zero-final/chunk-0007/capture/digital_4.bin",
+      "sha256": "78e9a0d78aee764e4f83a7d0eb12fbf93ff00a614f79548f07ad381aaeed775d",
+      "bytes": 23155244
+    },
+    {
+      "archive_path": "build/bench-20260906/protected-overnight-002/014-zero-final/chunk-0007/capture/digital_5.bin",
+      "sha256": "9fc8144d217239a594ddceadc59cbbd028c24cbd3f040ffcc7c496a727667427",
+      "bytes": 23195668
+    },
+    {
+      "archive_path": "build/bench-20260906/protected-overnight-002/014-zero-final/chunk-0007/capture/waveform.sal",
+      "sha256": "592db72d27906b66c7fab6463e45b8b2e7680bee0e027dbb65bef98e7cfc1dbb",
+      "bytes": 5019155
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+PRU audit passed: 4412 bytes; 139 frames; exact lengths/masks/order; 70/140/240 cycles;
+  profiles 1/2: full traces; profiles 3/4 (BGR): representative traces; 64 enable combinations on profile 1;
+  ABI4 per-bank gates; no pre-grant edges; stale/future grants rejected; exact bank-done ordering;
+  all 5 ns parity paths; sequence wrap; init validation; finite drains; Tsettle; no timed reads/interrupts.
+  Nominal issue-time model only: external bus stalls and physical edges require hardware measurement.

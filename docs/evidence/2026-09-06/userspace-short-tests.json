@@ -1,0 +1,39 @@
+{
+  "record_type": "derived summary",
+  "provenance": {
+    "sources": [
+      {
+        "archive_path": "build/bench-20260906/reanalysis-review.json",
+        "sha256": "a95cb2b7afa05a095ab9e3522d864ceedf54727c38a36b889c783050e6f02a1e",
+        "bytes": 1644837
+      }
+    ],
+    "extraction": "Existing short-test totals and exclusions only; per-case records remain in the local archive.",
+    "numerical_policy": "Selected original values and text; no measurement values recomputed."
+  },
+  "data": {
+    "schema_version": 1,
+    "reviewed_utc": "2026-09-06T03:45:07.192922+00:00",
+    "checker_sha256": "0a5d60a7a8bcf3076fdf4765d79c72b76e893c0726afb8bec02d8bcaa1e8cced",
+    "cases": 133,
+    "case_groups": {
+      "matrix-001": 129,
+      "smoke-complete": 4
+    },
+    "pass": true,
+    "passed": 133,
+    "failed": 0,
+    "totals": {
+      "complete_pulses": 3513384,
+      "complete_channel_frames": 1566,
+      "complete_frame_bits": 3513384
+    },
+    "exported_capture_duration_s": 192.798171264,
+    "partial_boundary_frames": 0,
+    "partial_highs": 0,
+    "shared_prefix_edge_comparisons": 3085200,
+    "excluded": [
+      "smoke-initial: original acquisition-truncated capture, not part of qualification corpus"
+    ]
+  }
+}

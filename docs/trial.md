@@ -18,12 +18,12 @@ color order, electrical timing, or controller-to-panel packet delivery.
 - Use the supported BBG kernel `3.8.13-bone80` and matching native bundle.
   The existing board must provide Python 3, the required runtime libraries,
   `uio_pruss`, systemd, and the prerequisites in the
-  [operating guide](../README.md#requirements-and-build).
+  [operating guide](operations.md#runtime-prerequisites).
 - Establish root SSH access without an interactive password prompt, through
   the board's existing authentication setup. The launchers accept the target's
   SSH host key automatically, including when a different board reuses an IP.
 - Supply a local panel JSON file with the installed pixel profile and six
-  string lengths, following [panel configuration](../README.md#configure-a-panel).
+  string lengths, following [panel configuration](configuration.md).
   The launchers do not infer this from LEDscape's configuration.
 - Exclude independently launched renderers and other PRU/GPIO users. The
   handover controls the named `ledscape.service`; it cannot establish exclusive

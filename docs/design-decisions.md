@@ -1,0 +1,202 @@
+# Design decisions and implementation history
+
+This is the record of the original specification review and the implementation
+decisions that followed it. The numbered items 1–20 retain the review's detailed
+decisions and evidence; items 21–22 record the later gateway and exercise work.
+Checkboxes record completion or deliberate deferral at the time of each entry,
+not a fresh installation checklist.
+
+Dates, addresses, configuration examples, process state, and handback settings
+below are historical snapshots. Statements such as "current" and "remain active"
+within the original entries refer to their recorded implementation or bench
+state, not to the present state of those machines. In particular, the diagnostic
+bench's legacy color order does not describe every later panel.
+
+Use the [README](../README.md) for operation, the [specification](../spec.md) for
+the accepted interface and behavior, and the [roadmap](../todo.md) for current
+remaining work. The original userspace-only completion decision was superseded
+by the protected kernel path after the September 6 waveform failures.
+
+## Review context — September 6, 2026
+
+First-pass design review, the protected implementation, and the September 6 bench
+endurance work were complete when this review record was consolidated. The
+physical bench found repeated GPIO0 pulse/period violations in the original
+userspace-only implementation, after which the user explicitly authorized the
+kernel quiet-window helper and runtime preparation. The protected path uses ABI4
+and the required kernel helper. The final endurance run recorded 155,917
+successful sends, no failed sends, and no observed waveform violations in
+4,452,206,525 complete captured pulses. See the
+[physical bench report](validation-20260906.md) and
+[historical bring-up report](validation.md) for evidence and limits.
+
+The review resolved discussion items one at a time, recorded the agreed decision,
+and updated the corresponding specification. An explicit decision to defer an
+item counted as a resolution. Unchecked entries recorded open questions or
+suggestions, not newly accepted implementation requirements; their current
+status is summarized in the roadmap.
+
+## First-pass decisions
+
+- [x] **1. LED compatibility and color order** — spec §§1, 4.2, 7, 13.3, 15.
+  - Confirmed by the user: deployed pixels are WS2812B or WS2811 in high-speed data mode. Each panel contains only one pixel type and already has a local color-order configuration.
+  - Decision: use `dld-init CONFIG_FILE` with a local JSON file whose `pixel_type` is a supported profile identifier and whose `string_lengths` contains six integers from 0 through 300 in ascending physical pin order: P8_8, P8_10, P8_12, P8_14, P8_16, P8_18. `dld-send color` remains unchanged.
+  - The selected profile supplies timing/reset parameters and wire color order, with the shared initial symbol targets now decided under item 7 and production qualification following hardware testing. Arbitrary timing inputs are not exposed. Runtime timing values are preloaded into PRU registers and preserve nominal 5 ns resolution; firmware remains static.
+  - `dld-init` validates the file and writes the selected configuration to PRU0 data RAM for reuse after command exit. Configuration-file changes take effect on the next initialization; sends use the initialized state.
+  - Architecture resolved. Physical diagnostic captures do not resolve the actual installed pixel family, deployed color order, or complete chain-settling qualification; those remain follow-up under items 7 and 17.
+
+- [x] **2. Reset and completion boundary** — spec §§6.1, 8.2, 10, 13.4.
+  - Decision: `dld-send` reports success only after every configured pixel has had sufficient time to latch its color. This is a timing guarantee for supported hardware, not a readback acknowledgment from the pixels.
+  - After the final bank's successful clear/readback, wait the base reset duration (at least 300 µs), plus a conservative propagation bound for the longest configured chain across all banks, plus a positive profile safety margin. Round the implemented wait upward to PRU cycles. Earlier strings have remained low and are covered by the same final wait.
+  - With all lengths zero, use zero chain delay and wait the base reset plus margin from request acceptance. Initialization uses the same configured hold after establishing all outputs low.
+  - Spec, latency budget, and acceptance tests now include the complete wait. Actual profile propagation bounds, margins, and hardware validation remain under item 7.
+
+- [x] **3. Host wait and completion protocol** — spec §§8.2–8.3, 9.3–9.4.1, 9.6, 10, 13.8.
+  - Original first-pass decision: defer the kernel helper and use a precomputed userspace register-only spin followed by one mandatory ordered check for `DONE`. Superseded on 2026-09-06 after physical timing failures: implement per-bank kernel-controlled quiet windows, IRQ/FIQ and scheduling exclusion, and DMA draining. Elapsed host time alone never authorizes success.
+  - Current kernel loop uses Cortex-A8 CP15 cycle-counter reads, register arithmetic, and branches, with no data-memory, stack, peripheral-memory, cancellation-flag accesses, or calls inside the repeated loop. Warm the exact path before granting a bank and audit its emitted instructions. IRQ/FIQ and preemption are masked; CPSW is idled and MMC/EDMA inactivity is checked. Instruction fetches and unaccounted autonomous bus masters remain relevant limits.
+  - At fixed 1 GHz, derive each bank timer from its maximum length and the shared bit timing: `24 × Lbank × 1,200 + 600,000` CPU cycles, or 9.24 ms at length 300. A separate finite iteration guard catches a stopped counter; this fault path can exceed the normal timer target, and no software timer bounds a wedged hardware access. Final `Tsettle` runs in the PRU with CPU interrupts enabled.
+  - Transient DMA activity may retry admission under a 1 second deadline and 10,000-attempt cap, restoring CPSW and CPU state before each retry. Initial prepublication admission uses the same policy. After a bank is granted, its first completion check is authoritative: no grace period or bank/frame retry. A submitted failure is critical, returns exit code 5, and requires cleanup and `dld-init`.
+  - Gate readiness and final matching `DONE` have separate 20 ms deadlines with interrupts enabled between polls. Inter-bank Linux execution and admission waits mean there is no whole-frame 30 ms guarantee. Elapsed time alone never authorizes success.
+  - Firmware uses mailbox readiness/completion/error reporting without PRU-to-ARM interrupts. UIO remains for mapping/loading. Initialization may sleep/poll readiness with its separate 100 ms deadline because it emits no pixel data.
+
+- [x] **4. Recovery after sender death** — spec §§4.1, 8.3, 9.3–9.6, 13.7.
+  - Decision: no special sender-death tracking or recovery protocol. A published request may finish independently; subsequent sends use the existing validity/readiness checks.
+  - For an otherwise valid session, `RUNNING`, `WAIT_BANK`, or unequal request/completion sequences causes a pre-submission busy/not-ready failure (exit code 6), without waiting, overwriting the request, stopping the PRU, or invalidating initialization. Sequence inequality also catches the interval before PRU acceptance while status still contains the previous `READY` or `DONE`.
+  - Once valid `READY`/`DONE` with matching sequences, consistent ABI4 gate fields, and no error is observed, a later send can proceed normally. Merely arriving before the previous request finishes does not require reinitialization.
+  - The original userspace-only design could not guarantee cleanup after `SIGKILL`. The current kernel owns every submitted finite request through completion or execution-failure cleanup, including after fatal sender death or when that failure result cannot be copied back. Success leaves a reusable session; submitted execution failure invokes kernel cleanup independently of userspace survival. Copyout failure after a successful raw ioctl does not itself trigger kernel cleanup; a surviving CLI treats uncertain syscall errors conservatively and cleans up.
+  - Cancellation detected at a prepublication check submits nothing. A signal arriving after the final check can still be followed by publication; kernel ownership then applies. Handled post-publication cancellation invokes userspace cleanup and requires reinitialization.
+  - No orphan flag is added. An explicit `dld-init` that acquires the shared lock retains authority to replace the session. The lock remains held while a cooperating sender's kernel request finishes; initialization cannot bypass that in-flight operation.
+
+- [x] **5. Initialization prerequisite and checks** — spec §§3, 4.1, 8.3, 9.4, 13.7.
+  - Decision: trust the operator to run `dld-init` successfully first. Omit per-send firmware identity, PRU execution-state, and interrupt-controller verification; do not add heartbeat/probe requests.
+  - Retain command-block magic/ABI/profile/length validation and ABI4 status/sequence/gate readiness checks. These support safe submission and timing calculations; they do not prove firmware identity or liveness. Kernel clock qualification protects peripheral accesses and is not a firmware identity check.
+  - A stopped PRU with an apparently ready block fails to acknowledge a new submitted request within the bounded gate/final-completion policy (critical exit code 5). Malformed state fails before submission (exit code 7), and retained `RUNNING`/`WAIT_BANK`/outstanding state uses the existing busy rejection (exit code 6). Recovery remains an explicit `dld-init`.
+
+- [x] **6. Ownership and service coexistence** — spec §§3, 4.4, 9.5, 13.7.
+  - Decision: the shared lock coordinates cooperating DLD operations only, now including `dld-udp` sends under item 18. The commands trust the deployment to exclude LEDscape and other PRU users; no process scanning or automatic service management is added to the CLI.
+  - For testing, an external script stops the LEDscape service, ensures it has exited and will not restart during the test, then calls `dld-init CONFIG_FILE`. Failed shutdown or initialization prevents further sends.
+  - In production, replace LEDscape completely and remove it from startup. Provide the matching helper and runtime prerequisites, then run `dld-init CONFIG_FILE` at boot; begin color-command operation only after it succeeds. This deployment policy is agreed, but production boot integration has not been performed.
+  - Service-control details belong to the test script and production boot setup for the actual deployed system. Boot initialization retains the existing one-time CLI/long-lived PRU lifecycle; the optional UDP receiver starts after successful initialization, while local sends require no resident host daemon.
+
+- [x] **7. Waveform acceptance limits and measurement points** — spec §§7, 10, 13.4, 15.
+  - Decision: use `T0H = 350 ns`, `T1H = 700 ns`, and `Tbit = 1,200 ns` for both WS2812B and WS2811 high-speed profiles initially, then adjust as required from hardware testing. `Tbit` is rising edge to rising edge, including across pixel boundaries; the resulting lows are `T0L = 850 ns` and `T1L = 500 ns`.
+  - At 200 MHz these are 70/170 cycles for zero high/low, 140/100 cycles for one high/low, and 240 cycles per bit. Include mask/counter bookkeeping within the existing bit period. The three maximum-length bank passes now total 25.92 ms before final settling and control overhead.
+  - The initial symbol targets are accepted for diagnostic implementation, not claimed as universally datasheet-compliant. For example, the referenced WS2812B-V5 sheet specifies a longer minimum `T1L` than the chosen starting value. Protected header captures are now evaluated against the selected 50 ns timing tolerances; this does not qualify every LED revision.
+  - Hardware-test follow-up: measure at the first pixel's DIN after level shifting/wiring and at the header for comparison; record observed limits, measurement uncertainty, and any required tuning. Validate the installed profiles' color order, reset requirements, maximum propagation delay, and margins before production qualification. Installed-profile acceptance limits and qualification remain open; items 1 and 2's architecture and complete-settling requirement still apply.
+
+- [x] **8. Endurance and request-protocol coverage** — spec §§13.6–13.8.
+  - Original decision: use the user's oscilloscope plan. Repeatedly send `000000` for several hours with a positive pulse-width trigger greater than 400 ns, then repeat with `FFFFFF` and a trigger greater than 800 ns. These compare against nominal highs of 350 ns and 700 ns at the 1,200 ns bit period. The later authorized September 6 bench used repeated six-channel 500 MS/s captures and broader offline waveform checks; item 15 records that completed evidence without claiming gapless single-probe trigger coverage.
+  - Send sequentially after each preceding command succeeds; stop on command failure. Stop transmission and change/reset the scope trigger before switching phases. A probe can be moved between runs; record the pin/bank/profile, actual duration, settings, cadence, and any violations.
+  - This replaces alternating-color visual endurance checks and the earlier mandatory 24-hour/10-million-bit criteria. A clean result means no over-threshold high pulse was observed during that monitored run; it does not prove all bit timing, frame contents, or request handling is correct.
+  - Keep short waveform/color-order/count checks and the existing initialization, sender-death, busy, and completion-failure tests separate. Verify sequence wraparound with a focused protocol test. Repeated identical frames do not provide complete dropped/duplicated/stale-frame detection; expanded request-to-frame correlation is deferred beyond this endurance test.
+  - The earlier idle-system acceptance versus load-characterization distinction belonged to the userspace-only approach. Current protected tests apply the selected physical limits under normal, CPU, DDR, Ethernet, and selected storage activity; record achieved loads and preserve any command or waveform failure. Completed bench endurance evidence is recorded under item 15.
+
+- [x] **9. Visible update skew** — spec §§5.4, 6, 10.
+  - Decision: the sequential bank updates and earlier updates on shorter strings are acceptable for this application. Retain the fixed bank order and exact per-string lengths without padding or an update-alignment mechanism.
+  - With all bank lengths 300 at the initial 1,200 ns bit period, first-to-last bank data completion differs by a nominal 17.28 ms plus intervening control, Linux execution, and admission gaps. Actual latch timing includes reset/propagation behavior; unequal lengths can produce additional within-bank skew, so this example is not a universal skew bound.
+  - This resolves within-panel update skew. Cross-panel synchronization across the 72 controllers remains outside the first-pass interface, and the complete final-settling guarantee remains unchanged.
+
+- [x] **10. Display state during initialization and recovery** — spec §§4.1, 4.3, 9.6, 13.7.
+  - Decision: initialization sends no pixel data and preserves a healthy idle display's latched colors. After an interrupted frame, forcing low/reset may latch pending data, so initialization or recovery cannot guarantee preservation of the previous picture, including on newly disabled strings.
+  - Driving the data lines low is not a black frame. Kernel-owned submitted-failure cleanup and the userspace safeguard remain best effort when hardware is inaccessible; neither adds automatic blackout or prior-frame restoration.
+  - A later successful send establishes its requested color on enabled strings. Healthy-idle preservation and interrupted-frame recovery are separate acceptance cases.
+
+- [x] **11. Physical pixel count versus transmitted frame length** — spec §§1, 6, 12.
+  - Decision: transmit exactly the six configured string lengths, each 0 through 300 in the pin order recorded under item 1. Length zero disables transmission on that pin; all six pins are still initialized as outputs driven low.
+  - Pass lengths through PRU0 data RAM at initialization and preload each bank's lengths into registers before streaming. Remove finished pins from the active mask between pixels, after the last bit of their final pixel; end each bank at its longest configured length. Finished and disabled pins remain low.
+  - Firmware remains static. Keep two GPIO writes per data bit and no command-memory reads during the timed stream; include pixel-boundary bookkeeping in the timing budget. Frame duration depends on the configured bank maxima and selected timing profile.
+  - Configuration changes take effect through `dld-init CONFIG_FILE`; subsequent sends reuse the initialized lengths. Reset/completion is resolved under item 2; visible skew is accepted under item 9.
+
+- [x] **12. Reproducible build and legacy runtime compatibility** — spec §§3, 9.1, 11.
+  - Decision: use the supplied BBG at `root@beaglebone` for native reference builds, with source maintained on the Windows PC. Read-only inspection confirmed Debian 7, kernel `3.8.13-bone80`, `armhf`, GCC 4.6.3, Make 3.81, binutils 2.22, and glibc 2.13 with development headers. No cross-compilation sysroot or paid tools are required.
+  - Respect the user's board constraint: create a dedicated new project directory and keep build inputs, outputs, logs, and tests there. Leave existing files, project trees, installed tools, and system/startup configuration untouched. Building does not take PRU/GPIO ownership or stop services; hardware testing remains a separate step.
+  - Later bench authorization permits the recorded ownership handover, reversible CPU/user-LED preparation, module loading, and new `tmpfs` runtime/log directories. This does not authorize persistent boot changes or production rollout. The September 6 handback retains the tested helper and preparation for continued DLD use, with original settings saved for an explicit later restoration.
+  - Pin and vendor the existing LEDscape PASM 0.84 source and license, build it locally inside the project, and invoke it explicitly with `-V3`. The board's installed PASM 0.86 remains untouched. Windows-native PRU assembly is feasible and optional; compare its firmware with the native reference before substituting it.
+  - Build checks shall enforce the PRU0 8,192-byte instruction-memory limit, loader bounds, and command-block/data layout; record source/tool versions, flags, hashes, sizes, and runtime dependencies. Compile C99 against the existing ARM hard-float headers/libraries without requiring new system packages.
+  - Initial ABI3 result: native GCC 4.6.3 builds passed with a 4,308-byte PRU image matching Windows. The protected ABI4 revision now uses a matching 4,412-byte image and a required native kernel module; its Thumb entry bridge and ARM wait loop pass the assembly audit. See the validation reports for the original recovered bus fault and subsequent physical captures. Production profile/settling qualification remains open.
+
+## Kernel implementation and utility integration
+
+Item 13 superseded its earlier deferral. The unchecked items below record follow-up at this stage of the review, not a claim of completed qualification or production deployment; see the current roadmap for their status.
+
+- [x] **13. Quiet-window completion and timeout mechanism** — spec §§8–10, 13.8.
+  - Implementation now authorized (2026-09-06). PRU bank gates prevent unprotected pixel output. The kernel grants each nonempty bank only inside its quiet window and checks that bank's completion once afterward.
+  - Selected implementation: ARM internal cycle-counter reads plus register arithmetic/branches, with an independent finite iteration cap. No repeated shared-memory or peripheral reads during pixel output. Validate the PMU reservation, fixed CPU rate, bounded drain and final-settle paths, and restoration on every error.
+  - Current DMA admission permits up to 1 second/10,000 attempts with IRQs enabled and CPSW restored between attempts. This replaces the original 20 ms admission policy after a prepublication eMMC-busy rejection; it does not change the protected bank timer, 20 ms gate/final waits, or prohibition on post-grant retry.
+  - Implemented and loaded on the supplied BBG. Native functional and machine-code audits pass; the live lifecycle, sender-signal, and direct kernel fatal-sender cleanup tests pass. The full 129-case physical matrix and initial longer zero/one captures pass. Completed varied-load and overnight evidence is recorded separately below and in the current report.
+
+- [ ] **14. Ethernet packet loss during CPDMA idle** — spec §§14.2, 14.4.
+  - The legacy shim in item 18 intentionally preserves OPC/UDP without acknowledgment, sequencing, or retry. It coalesces bounded batches of queued updates and cannot count packets lost before reaching its socket, including during command-idle windows.
+  - Measure actual controller cadence, received/sent rates, loss, and visible behavior at the intended 20 Hz. Resource reuse alone does not guarantee a 50 ms update deadline; protected admission and Linux scheduling remain in the path.
+  - A reliable sequenced/acknowledged protocol remains a separate possible controller revision, not a requirement of legacy emulation. End-to-end loss and cadence qualification remain open.
+
+- [x] **15. Protected waveform bench endurance**.
+  - Completed six-channel 500 MS/s physical testing with the unchanged 50 ns timing limits. The final protected run completed fourteen full phases and a shortened final black phase from 06:50:11 through 13:10:23 UTC: 155,917 successful sends, zero failed sends, all sender/load exits zero, and no cleanup errors. The supervisor's retained cancellation and generic final-phase failure labels record the deliberate 13:10:21 handback STOP, not a driver or waveform failure; the final phase is not claimed as a complete 1,800-second run.
+  - Final-run primary captures plus the independently reviewed final-capture supplement total 18,257.095062016 seconds, 4,452,206,525 complete pulses, and 663,562 complete channel frames, with zero observed waveform violations. Intervals include reset/idle time; acquisition gaps remain unobserved. Channel frames are per-string frames, not six-string requests. The earlier userspace faults and the first protected run's prepublication eMMC admission rejection remain separate historical failures.
+  - Handback passed all sixteen checks at 13:10:40–13:10:41 UTC. The tested helper and CPU/LED preparation remain active; the valid ABI4 mailbox is DONE at sequence 2,132 with `ws2812b`, six lengths of 300, and black. All six GPIO outputs are low, owned workers have exited, no new kernel messages appeared, and unrelated activity was left untouched. Bench completion does not close installed-panel qualification or production rollout.
+
+- [ ] **16. Production rollout**.
+  - Qualify the installed panel/profile and provide the agreed boot ownership, kernel helper, runtime prerequisites, and successful initialization before accepting colors. Run the legacy UDP receiver afterward when replacing the existing network input, and decide explicit service recovery behavior for fatal sender errors. Current bench handback and the shim implementation do not install production startup configuration or qualify controller-to-panel delivery.
+
+- [ ] **17. Installed-panel qualification**.
+  - Verify installed pixel family/color order and waveforms after level shifting and at the final pixel before production. The current bench's legacy configuration says GBR; the existing diagnostic profiles do not establish that physical order. Digital header captures do not prove downstream LED latch behavior, electrical margins, or complete chain settling. Confirm reset/propagation bounds and profile margins on the installed hardware.
+
+- [x] **18. Legacy UDP input and reusable sender** — spec §§4.5, 9.4–9.5.
+  - User-approved architecture: retain `dld-send` and move its transmission lifecycle into one internal C sender linked by both the CLI and a resident `dld-udp` process. Keep mappings, kernel-device descriptor, and lock descriptor open; lock per frame and refresh the initialized mailbox/profile/lengths on each send. Only `dld-init` reads the local JSON file. No fork, configuration-file I/O, firmware reload, or per-packet remapping.
+  - Receive the first pixel of the first OPC message in each UDP datagram, using logical RGB bytes 4–6, command zero, and a complete declared payload of at least three bytes. Channel is ignored; trailing bytes are allowed. Defaults remain dual-stack UDP port 7890; optional numeric bind address and port select the listener.
+  - Coalesce up to 64 datagrams per receive batch, selecting the newest valid color; malformed input cannot replace a selected valid color. Repeated identical colors still send. No acknowledgment, sequencing, automatic retransmission, TCP, or transform of received RGB is added. The later status-flash extension is recorded under item 19.
+  - Run in the foreground after initialization. Idle handled signals stop normally; every sender error terminates the receiver with the existing diagnostic/exit code and no automatic recovery. Stop the receiver before manual operations, module unload, or handover. Shared sender/packet/loopback software tests do not replace target 20 Hz, packet-loss, and waveform qualification under items 14 and 17.
+
+- [x] **19. UDP startup and inactivity status flashes** — spec §4.5.
+  - Enable a one-time green flash after successful bind and sender attachment, and a red flash after more than 60 seconds since the last received datagram or previous red flash. `--no-startup-flash` and `--no-idle-flash` suppress them independently. All datagrams successfully read on the bound socket reset inactivity, including malformed or unsupported packets.
+  - Each flash uses the shared sender for a linear 0.5-second ramp from black to full primary color and an immediate 0.5-second ramp back to black. Wait for each frame's complete transmission, then select the next level from monotonic elapsed time. Sender speed determines the frame cadence; slow sends skip intermediate levels and can extend the nominal cycle while preserving black/full-color/black endpoints.
+  - Valid UDP colors interrupt flashes between completed sends. Invalid packets reset inactivity without interrupting a running flash. The inactivity interval starts at sender attachment and resets at each packet receipt or completed red flash; green completion does not reset it. An uninterrupted flash ends black without restoring the previous UDP color. Signals and sender errors retain existing cleanup semantics; no kernel, PRU, or standalone-command behavior changes.
+  - Packet-only regressions disable both animations; flash timing and receive/lifecycle interaction have separate software coverage. Installed-panel appearance and actual receive-to-completion performance remain part of items 14 and 17.
+
+- [x] **20. Temporary replacement of LEDscape over SSH**.
+  - Provide Windows PowerShell and Linux shell launchers taking a target address
+    and local panel configuration. Copy a matching native bundle into a fresh
+    RAM-backed `/run` directory, stop the existing LEDscape service, apply the
+    runtime prerequisites, initialize the panel, and detach `dld-udp` from SSH.
+  - Package all commands with the common `/run/dld.lock` path. Keep DLD files,
+    preparation records, and receiver logs in RAM; change no installed files,
+    service definitions, or boot enablement. Accept SSH host keys automatically,
+    including reused target addresses, without changing global SSH settings.
+    Require LEDscape already enabled at boot. Validate the new bundle before
+    gracefully stopping existing DLD commands, unloading their helper, and
+    starting the replacement. Allow repeated deployments without reboot;
+    retain previous trial directories and logs. Serialize deployments with
+    `/run/dld-trial.lock`, fail on shutdown/setup errors, and wait for receiver
+    readiness before reporting success.
+  - Recovery is reboot through the existing LEDscape boot setup. No rollback
+    automation or persistent DLD service is added. Software checks of packaging
+    and launch behavior do not replace physical handover and installed-panel
+    qualification. See the [trial procedure](trial.md).
+  - The authorized live handover on September 6 to `192.168.68.62` passed:
+    LEDscape stopped, six 300-pixel WS2812B strings initialized, and the receiver
+    remained alive on UDP port 7890 after SSH disconnected. SSH first-use trust
+    and hidden Windows diagnostics were resolved. See the
+    [live trial record](validation-trial-live.md); installed-panel waveform
+    and controller-delivery qualification remain separate.
+
+- [x] **21. Versioned release and Raspberry Pi deployment gateway** — September 6–7, 2026.
+  - Published [v0.1.0](https://github.com/bigjosh/deharrak-leds-driver/releases/tag/v0.1.0) with the tested native BBG bundle, deployment launchers, example configuration, documentation, and scene exerciser. The gateway stores these files on the Pi and uses SSH to reach BBGs on that site's network; no inbound NAT connection or Pi compilation is needed.
+  - At release publication the repository was private and required GitHub authentication for download. It became public on September 7 at the user's request; the [gateway guide](gateway.md) now uses direct HTTPS downloads without a login. The release targets ARMv7 BBGs running `3.8.13-bone80`; the Pi's architecture and kernel need not match. The native bundle and local bootstrap must match before packaging. An explicit file allowlist excludes private keys, live panel configurations, and unrelated build artifacts.
+  - All eleven gateway packaging tests passed. The archive was unpacked and its launcher checked; both published assets were downloaded from GitHub and compared byte-for-byte with the local originals and SHA-256 sidecar. These are packaging and transfer checks, not new waveform measurements.
+  - The user subsequently reported on September 7 that the workflow worked perfectly. This supports the practical deployment result; it does not supply a measured packet-loss rate or electrical qualification for the remote panels. See the [gateway guide](gateway.md). BBG installation remains temporary in `/run`, with persistent production startup separate.
+
+- [x] **22. Local multi-panel visual exercise** — September 6–7, 2026.
+  - Added a repeating nineteen-scene UDP exerciser with rainbow fades, flashes, random jumps, breathing, panel phases, bit patterns, and black intervals. All packets obey `R + G + B <= 255` and a maximum ten packets per second per panel. Scene and runner checks passed, including real localhost UDP cases.
+  - Checked and, where necessary, updated `192.168.68.56`, `.62`, and `.73` using the trial scripts. The `.56` and `.73` legacy configurations recorded BGR and six strings of 100; the selected `ws2812b-bgr` profile preserved that order and count without asserting the unknown pixel family. `.62` used its explicit `ws2812b` configuration with six strings of 300.
+  - The local run finished on the user's stop request at `2026-09-07T02:54:15.713687Z`, after 30,002.531 seconds (8 hours 20 minutes). It recorded 274,268 successful local UDP sends per panel, zero local send errors, and a final black packet to each panel. The background exerciser exited; this is a completed run, not an ongoing test.
+  - Short startup taps observed twenty valid datagrams on each board and healthy receivers. Neither those samples nor successful local UDP sends count every frame received or displayed. This ten-packet-per-second visual exercise does not close the separate real-controller 20 Hz delivery or installed electrical qualification follow-ups. See the [exercise guide](exercise.md) and [completed run record](validation-exercise.md).
+
+## Reference material from the review
+
+- [Worldsemi WS2811 datasheet](https://www.mouser.com/datasheet/3/1348/1/WS2811.pdf): mode, timing, and color-order differences to check against deployed hardware.
+- [Worldsemi WS2812B-V5 datasheet](https://www.world-semi.co.kr/_files/ugd/89cd03_1023b0e9d135431aa1e6491bfc318112.pdf): an example of revision-specific timing and propagation requirements; deployed revision remains to be established.
+- [Linux v3.8 UIO source](https://raw.githubusercontent.com/torvalds/linux/v3.8/drivers/uio/uio.c) and [BeagleBoard 3.8 PRUSS UIO source](https://raw.githubusercontent.com/beagleboard/linux/3.8/drivers/uio/uio_pruss.c): mapping/lifetime behavior and stale notification cleanup to verify against the installed bone80 kernel; the selected protocol does not use completion interrupts.
+- [Linux ARM counted-delay example](https://raw.githubusercontent.com/torvalds/linux/v3.8/arch/arm/lib/delay-loop.S) and [delay timing cautions](https://www.kernel.org/doc/html/latest/timers/delay_sleep_functions.html): historical references for the superseded userspace spin. The current cycle-counter implementation and limits are documented in the [quiet-window guide](quiet-window.md).
+- Historical loader comparison: LEDscape's `am335x/app_loader/interface/prussdrv.c`. The current build uses its included loader and vendored PASM source; no machine-specific external checkout is required.
+- [TI PRU read/write latency guidance](https://e2e.ti.com/support/processors-group/processors/f/processors-forum/1625250/faq-pru-read-write-latencies).
+- [TI AM335x technical reference manual](https://www.ti.com/lit/ug/spruh73q/spruh73q.pdf): CPDMA command-idle behavior in §14.3.2.4.5.

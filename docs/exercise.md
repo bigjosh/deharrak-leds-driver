@@ -63,6 +63,16 @@ Retain that path when running the program in the background.
 - `events.log` records scene changes and errors, rotating at approximately
   1 MiB with three backup files.
 
+For a Windows PowerShell status snapshot, use the directory printed at startup:
+
+```powershell
+Get-Content .\build\YOUR_RUN_DIRECTORY\status.json
+```
+
+After a graceful stop, `status.json` has `"event": "finish"`, the stop reason,
+and final counters. A saved process ID describes the original run and does not
+prove that the process is still running.
+
 Stop a foreground run with Ctrl+C, or ask a background run to stop from another
 terminal:
 
@@ -80,5 +90,6 @@ Network send failures are logged per target while the remaining panels
 continue. The tester does not update, restart, or inspect remote receivers;
 receiver logs and waveform captures remain separate checks.
 
-The [three-panel startup record](validation-exercise.md) documents the initial
-deployment checks, local software tests, and observed packet arrival.
+The [completed three-panel exercise record](validation-exercise.md) documents
+an 8-hour, 20-minute run, its initial deployment and packet-arrival checks, and
+the final local send counters and their limits.

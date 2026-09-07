@@ -231,7 +231,7 @@ test directory; no production boot or existing service-file edits are part of th
 test plan.
 
 Before any live suite, apply the fixed-1-GHz/user-LED preparation and load the
-matching `dld_quiet.ko`, following [driver startup](../README.md#start-the-driver)
+matching `dld_quiet.ko`, following [driver startup](../docs/operations.md#start-the-driver)
 and [quiet-window prerequisites](../docs/quiet-window.md). The module requires
 a running `eth0` whose parent is bound to `cpsw`, an available exclusive PMU
 event, and the documented absence of competing autonomous masters. These

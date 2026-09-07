@@ -1,9 +1,16 @@
 # Temporary SSH trial validation — 2026-09-06
 
-The Windows/Linux launchers, shared remote handover helper, and package builder
-were validated without replacing the board's running hardware session. Native
+This is the initial build-only validation record for the Windows/Linux
+launchers, shared remote handover helper, and package builder. At this stage
+they were validated without replacing the board's running hardware session. Native
 build work used new directories on `/run` tmpfs. No LEDscape service change,
 module load/unload, PRU initialization, or physical LED send was performed.
+
+The subsequent [live handover](validation-trial-live.md),
+[repeat deployment](validation-trial-redeploy.md), and completed
+[three-panel exercise](validation-exercise.md) record later operational checks.
+Package hashes and test counts below identify this earlier build; they do not
+describe the latest release.
 
 ## Checks completed
 
@@ -67,10 +74,13 @@ The native source and retained package build were
 `/run/dld-build-source.70srEH` and `/run/dld-package.oQB6LA`; both disappear
 on reboot. The package has already been copied to the Windows workspace.
 
-## Remaining live check
+## Later live checks and remaining limits
 
-A full launch against a freshly booted compatible BBG, with its actual panel
-configuration and controller traffic, remains to be performed. Startup
-readiness is not an ongoing health monitor or physical waveform qualification.
+At this build-only validation stage, a full live launch had not been performed.
+The later records linked above document handover from LEDscape, replacement of
+an existing DLD trial, and an 8-hour, 20-minute local UDP exercise. Sustained
+delivery with the intended controller, packet-loss measurement, and downstream
+waveform qualification remain separate work. Startup readiness is not an
+ongoing health monitor or physical waveform qualification.
 See the [trial procedure](trial.md) for both launcher commands and reboot
 recovery, and [UDP operation](udp.md) for receiver behavior.

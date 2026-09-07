@@ -1,10 +1,17 @@
 # UDP shim implementation validation — 2026-09-06
 
-The resident `dld-udp` receiver and shared sender were built and tested on the
+This record covers the initial software validation of the resident `dld-udp`
+receiver and shared sender. They were built and tested on the
 reference BeagleBone Green with GCC 4.6.3, Make 3.81, binutils 2.22, glibc 2.13,
 Python 3.2, and matching Linux `3.8.13-bone80` headers. All work used a new,
 isolated build directory. No firmware or module was loaded, no valid hardware
 send was issued, and no service or boot configuration was changed.
+
+Later work added [status flashes](validation-flashes.md), completed
+[live deployment](validation-trial-live.md) and
+[repeat deployment](validation-trial-redeploy.md), and ran a
+[three-panel UDP exercise for 8 hours, 20 minutes](validation-exercise.md).
+The counts and artifacts below preserve the initial shim's validation results.
 
 ## Functional results
 
@@ -62,13 +69,15 @@ The exact native verification log is retained at
 The same archive retains the built binaries, firmware listing, and module
 disassembly. These paths identify local artifacts excluded from Git.
 
-## Remaining physical work
+## Later operation and remaining physical work
 
-Run the shim with the actual controller and capture the panel outputs to
-measure sustained 20 Hz delivery, packet loss, latency, and waveform behavior
-under the intended load. Matching protected binaries and passing software tests
-do not extend the earlier CLI capture results to new end-to-end UDP coverage.
-Installed-panel qualification and production startup integration remain open.
+The later three-panel exercise used real receivers and a local sender capped
+at 10 Hz per target. It recorded successful local sends and a short initial
+packet-arrival sample; it did not measure sustained 20 Hz delivery from the
+intended controller, packet loss, latency, or downstream waveform behavior.
+Matching protected binaries and passing software tests do not extend the
+earlier CLI capture results to those end-to-end UDP measurements. That
+qualification and permanent production startup integration remain open.
 
 See [UDP operation](udp.md) for the supported interface and
 [the test guide](../tests/README.md) for repeatable checks. The prior

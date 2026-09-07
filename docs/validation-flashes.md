@@ -1,10 +1,17 @@
 # UDP status-flash validation — 2026-09-06
 
-The green startup and red inactivity flashes were built and tested natively
+This record covers the initial software validation of the green startup and
+red inactivity flashes. They were built and tested natively
 on the reference BeagleBone Green, using GCC 4.6.3 and Linux
 `3.8.13-bone80`. Work used the new isolated directory
 `/root/dld-flash-build-1788713380339`. No module or firmware was loaded,
 no physical LED send was issued, and no service or boot configuration changed.
+
+Later [live handover](validation-trial-live.md) and
+[repeat deployment](validation-trial-redeploy.md) started receivers with both
+status flashes enabled. The [completed three-panel exercise](validation-exercise.md)
+records subsequent operation with real UDP traffic. The artifact identities
+and software results below describe the earlier build stage.
 
 ## Software results
 
@@ -67,11 +74,14 @@ The build report is `native/build/build-report.txt`, SHA-256
 `99047e8e6256d76f6a902c39e11a188acd2e600d7ff14612f3c39c9282eb0e98`.
 The report includes compiled source hashes and runtime dependencies.
 
-## Physical qualification
+## Physical evidence and remaining limits
 
-The new flashes have not been displayed or captured on the installed panel.
-Their appearance, physical cadence, controller interaction, and UDP loss during
-protected sends remain part of the planned installed-panel qualification.
+At this software-validation stage, the flashes had not been displayed or
+captured on an installed panel. The later live records establish receiver
+startup with the default flashes and operation with test traffic; they do not
+measure flash cadence, intended-controller interaction, or UDP loss during
+protected sends. Those measurements remain separate from visual feedback and
+the software timing checks reported here.
 The [test guide](../tests/README.md) describes that work, and the
 [UDP guide](udp.md) documents operation and timing. The earlier
 [waveform investigation](validation-20260906.md) remains the physical evidence

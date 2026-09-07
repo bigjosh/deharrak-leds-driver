@@ -9,7 +9,7 @@ flash during UDP inactivity.
 
 ## Start and stop
 
-Build and complete [driver startup](../README.md#start-the-driver), including
+Build and complete [driver startup](operations.md#start-the-driver), including
 successful `dld-init`, before starting the receiver as root:
 
 ```sh
@@ -61,7 +61,7 @@ critical cancellation and cleanup rules as `dld-send`. A submitted kernel
 operation retains ownership until it finishes or cleans up its failure.
 
 Stop the receiver and wait for it to exit before manual testing, changing panel
-configuration, unloading `dld_quiet`, or [returning control to LEDscape](../README.md#return-control-to-ledscape).
+configuration, unloading `dld_quiet`, or [returning control to LEDscape](operations.md#return-control-to-ledscape).
 An open receiver retains the helper's device reference. Configuration changes
 still use `dld-init CONFIG_FILE`; restart the receiver after successful
 initialization. Production boot-service installation and restart policy are
@@ -211,7 +211,7 @@ reinitialization: the next send validates the new mailbox configuration.
 
 A sender failure is fatal to the receiver, including a busy or invalid session.
 It reports the diagnostic and exits using the sender's existing
-[exit-code meanings](../README.md#handle-errors). It does not drop a failed
+[exit-code meanings](operations.md#handle-errors). It does not drop a failed
 send and continue, initialize implicitly, or automatically retry the frame.
 Inspect the error, resolve ownership/prerequisites, and explicitly reinitialize
 after a critical/invalid-session error before restarting. Invalid network

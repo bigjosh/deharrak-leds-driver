@@ -3,8 +3,10 @@
 Build the ARM commands, embedded PRU firmware, and matching kernel helper on
 the BeagleBone Green. The Windows wrapper copies this checkout into a fresh
 directory and runs the native build there; it needs no ARM cross compiler.
-Return to the [operating guide](../README.md) for panel configuration and
-hardware handover after the build succeeds.
+For an existing compatible board, the [prebuilt gateway release](gateway.md)
+avoids building altogether. See [manual operation](operations.md) for hardware
+handover after a source build, or the [trial guide](trial.md) to deploy a bundle
+over SSH.
 
 ## Supported environment
 
@@ -39,6 +41,15 @@ Run from the repository root:
 .\tools\build-bbg.ps1
 ```
 
+If Windows blocks PowerShell scripts, invoke this wrapper with a process-only
+execution-policy override:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\build-bbg.ps1
+```
+
+This does not change the machine's saved execution policy.
+
 The default host is `beaglebone`. To select another configured host and an
 explicit new directory:
 
@@ -46,7 +57,8 @@ explicit new directory:
 .\tools\build-bbg.ps1 -HostName beaglebone -RemoteDirectory /root/dld-release-001
 ```
 
-`HostName` must be a plain hostname. The remote path must be a fresh
+`HostName` must be a plain hostname or IP address, without a username or port.
+The remote path must be a fresh
 `/root/dld-NAME` directory without spaces or nested paths; the script refuses
 to reuse an existing directory. Omitting it generates a timestamped, unique
 `/root/dld-build-...` name.
@@ -65,13 +77,20 @@ the directory. On failure, inspect that same directory rather than rerunning
 against it. The normal instruction-model audit takes several minutes on
 the BBG's Python 3.2 runtime.
 
+The wrapper's private lock is useful for an isolated build, but it is not the
+RAM lock used by deployed releases. For deployment, use
+[`tools/package-trial.sh`](#package-a-temporary-ssh-deployment), which rebuilds
+in a fresh workspace with `/run/dld.lock`. Copying an executable to `/run` does
+not change its compiled lock path.
+
 ## Build directly on the BBG
 
-From a dedicated source directory:
+From a fresh, dedicated source directory, build with the shared runtime lock
+used by the deployment tools:
 
 ```sh
-make -j2 LOCK_PATH="$PWD/dld.lock"
-make LOCK_PATH="$PWD/dld.lock" test report
+make -j2 LOCK_PATH=/run/dld.lock
+make LOCK_PATH=/run/dld.lock test report
 ```
 
 `make` builds all three commands and the helper. `make test` runs pure C and
@@ -84,8 +103,8 @@ If the matching kernel build tree is elsewhere, pass the same override on
 each build/test/report invocation:
 
 ```sh
-make -j2 KDIR=/path/to/matching/build LOCK_PATH="$PWD/dld.lock"
-make KDIR=/path/to/matching/build LOCK_PATH="$PWD/dld.lock" test report
+make -j2 KDIR=/path/to/matching/build LOCK_PATH=/run/dld.lock
+make KDIR=/path/to/matching/build LOCK_PATH=/run/dld.lock test report
 ```
 
 `LOCK_PATH` is compiled into the commands. Omitting it selects
@@ -93,7 +112,10 @@ make KDIR=/path/to/matching/build LOCK_PATH="$PWD/dld.lock" test report
 choice. Use all three commands from the same build. Build-local locks do not
 coordinate different builds, so run only one build's initialized session
 at a time. A shared deployment should compile every cooperating command
-with the same absolute lock path.
+with the same absolute lock path. Keep runtime binaries, logs, and the lock
+in `/run` for the protected operating setup; [manual operation](operations.md)
+shows how to stage a native build there. Do not delete or replace the lock file
+while any sender still has it open.
 
 Make does not track changed compiler options or lock locations. Before
 changing those in an existing build, run `make clean` and rebuild. That target
@@ -103,8 +125,8 @@ separately when changing kernel or module build options:
 ```sh
 make clean
 make -C /lib/modules/$(uname -r)/build M="$PWD/kernel" clean
-make -j2 LOCK_PATH="$PWD/dld.lock"
-make LOCK_PATH="$PWD/dld.lock" test report
+make -j2 LOCK_PATH=/run/dld.lock
+make LOCK_PATH=/run/dld.lock test report
 ```
 
 Use the matching custom kernel path in the clean command if `KDIR` was
@@ -139,6 +161,14 @@ bootstrap rejects a bundle containing a different copy of its helper.
 The [trial guide](trial.md) gives Windows and Linux commands, prerequisites,
 and the reboot recovery procedure.
 
+For a versioned GitHub gateway release, use Python 3.8+ on Windows, Linux, or
+the Pi to wrap this tested native bundle with the matching deployment scripts,
+configuration example, and documentation. The
+[gateway release instructions](gateway.md#release-contents-and-verification)
+describe `tools/package-gateway.py` and its SHA-256 sidecar. This outer
+packaging step does not compile or qualify new BBG binaries. A gateway archive
+contains deployment files, not the full native source checkout.
+
 ## Outputs and build record
 
 Paths below are relative to the source directory where the native build ran.
@@ -148,6 +178,7 @@ Paths below are relative to the source directory where the native build ran.
 | `build/dld-init` | Initializer containing the embedded PRU image |
 | `build/dld-send` | Uniform-color sender |
 | `build/dld-udp` | Resident first-pixel OPC/UDP receiver, using the same sender |
+| `build/dld-config-check` | JSON/configuration validator, built explicitly or by the trial packager |
 | `kernel/dld_quiet.ko` | Matching protected-transmission helper |
 | `build/pasm` | Project-local PRU assembler |
 | `build/pru.bin` | PRU instruction image |
